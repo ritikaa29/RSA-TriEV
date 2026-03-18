@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TriEV RSA | Ticket</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080c18;--card:#0e1424;--card2:#121a2e;--border:#1c2840;--border2:#243350;
+  --text:#eef2ff;--text2:#7a9cc8;--text3:#344d6e;
+  --orange:#ff8c00;--orange2:#ff5500;--green:#00d4a0;--red:#ff4455;--blue:#3fa8f0;--gold:#f5c518;
+  --r:14px;--r2:20px;
+  font-family:'Nunito',sans-serif;
+}
+html{background:var(--bg);color:var(--text);min-height:100%}
+body{max-width:500px;margin:0 auto;padding-bottom:40px}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(160deg,#0c1a3a 0%,var(--bg) 70%);padding:0 0 20px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-80px;right:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(255,140,0,.12),transparent 70%)}
+.hero-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 0}
+.logo-row{display:flex;align-items:center;gap:9px}
+.logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--orange),var(--orange2));border-radius:10px;display:grid;place-items:center;font-size:16px;box-shadow:0 4px 14px rgba(255,140,0,.35)}
+.logo-text{font-size:17px;font-weight:800;letter-spacing:-.4px}
+.logo-sub{font-size:9px;color:var(--text2);font-weight:700;margin-top:-2px}
+.hero-content{padding:22px 18px 0}
+.sos-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(255,68,85,.12);border:1px solid rgba(255,68,85,.22);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:800;color:var(--red);letter-spacing:.4px;margin-bottom:10px}
+.hero-h{font-size:28px;font-weight:800;line-height:1.15;margin-bottom:4px}
+.hero-h span{color:var(--orange)}
+.hero-bi{font-size:13px;color:var(--text2);font-weight:600}
+
+/* ── STEPS ── */
+.steps{display:flex;align-items:center;padding:18px 18px 0;gap:0}
+.snode{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.snum{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;transition:.3s}
+.snum.done{background:var(--green);color:#000}
+.snum.active{background:var(--orange);color:#000;box-shadow:0 0 14px rgba(255,140,0,.5)}
+.snum.pending{background:var(--border2);color:var(--text3)}
+.sline{flex:1;height:2px;background:var(--border);transition:.3s}
+.sline.done{background:var(--green)}
+.slabel{font-size:10px;font-weight:700;transition:.3s}
+.slabel.active{color:var(--orange)}
+.slabel.done{color:var(--green)}
+.slabel.pending{color:var(--text3)}
+
+/* ── CONTAINER ── */
+.cnt{padding:14px 14px 0}
+
+/* ── HOW TO ── */
+.howto{background:linear-gradient(135deg,rgba(255,140,0,.07),rgba(255,85,0,.04));border:1px solid rgba(255,140,0,.15);border-radius:var(--r2);padding:16px;margin-bottom:14px}
+.ht-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer}
+.ht-icon{font-size:18px}
+.ht-title{font-size:13px;font-weight:800;flex:1}
+.ht-toggle{font-size:12px;color:var(--text2)}
+.ht-body{display:none}
+.ht-step{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,140,0,.08)}
+.ht-step:last-child{border:none}
+.ht-n{width:22px;height:22px;background:rgba(255,140,0,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--orange);flex-shrink:0;margin-top:1px}
+.ht-text{font-size:12px;color:var(--text2);line-height:1.5}
+.ht-text b{color:var(--text);font-weight:700}
+.ht-text i{color:var(--text3);font-style:normal}
+
+/* ── EMERGENCY ── */
+.emg{background:rgba(255,68,85,.06);border:1px solid rgba(255,68,85,.14);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px}
+.emg-title{font-size:10px;font-weight:800;color:var(--red);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
+.emg-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,68,85,.08)}
+.emg-row:last-child{border:none}
+.emg-name{font-size:13px;font-weight:700;flex:1}
+.emg-num{font-size:11px;color:var(--text2)}
+.call-btn{background:rgba(0,212,160,.15);border:1px solid rgba(0,212,160,.2);color:var(--green);border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:18px;margin-bottom:14px}
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.card-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:15px;flex-shrink:0}
+.card-title{font-size:15px;font-weight:800}
+.card-sub{font-size:11px;color:var(--text2);margin-top:1px}
+
+/* ── FORM ── */
+.flabel{font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;display:block}
+.flabel span{color:var(--text3);font-weight:600}
+.finput{width:100%;background:#0a0d18;border:1.5px solid var(--border);border-radius:10px;padding:12px 13px;font-size:15px;color:var(--text);font-family:'Nunito',sans-serif;font-weight:600;outline:none;transition:.2s;margin-bottom:13px}
+.finput:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,140,0,.1)}
+.finput::placeholder{color:var(--text3);font-weight:400}
+.finput[readonly]{background:#090c17;color:var(--text2);cursor:default}
+.fsel{width:100%;background:#0a0d18;border:1.5px solid var(--border);border-radius:10px;padding:12px 13px;font-size:14px;color:var(--text);font-family:'Nunito',sans-serif;font-weight:600;outline:none;transition:.2s;margin-bottom:13px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a9cc8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center}
+.fsel:focus{border-color:var(--orange)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── BUTTONS ── */
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-size:14px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;transition:.2s;letter-spacing:.3px}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.btn-orange{background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff;box-shadow:0 6px 20px rgba(255,140,0,.35);animation:glow 2.2s infinite}
+@keyframes glow{0%,100%{box-shadow:0 6px 20px rgba(255,140,0,.35)}50%{box-shadow:0 6px 32px rgba(255,140,0,.65)}}
+.btn-outline{background:rgba(255,140,0,.1);border:1.5px solid rgba(255,140,0,.25);color:var(--orange)}
+.btn-green{background:rgba(0,212,160,.15);border:1.5px solid rgba(0,212,160,.25);color:var(--green)}
+.btn-blue{background:rgba(63,168,240,.1);border:1.5px solid rgba(63,168,240,.2);color:var(--blue)}
+.btn-ghost{background:var(--border);color:var(--text2)}
+.btn-sm{padding:8px 14px;font-size:12px;border-radius:8px;width:auto}
+
+/* ── RIDER PROFILE CARD ── */
+.profile-card{background:linear-gradient(135deg,rgba(255,140,0,.08),rgba(255,85,0,.04));border:1px solid rgba(255,140,0,.18);border-radius:var(--r2);padding:16px;margin-bottom:14px}
+.pc-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,140,0,.12)}
+.pc-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--orange2));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0;box-shadow:0 4px 14px rgba(255,140,0,.3)}
+.pc-name{font-size:17px;font-weight:800;margin-bottom:2px}
+.pc-id{font-size:11px;color:var(--text2);font-weight:600}
+.pc-status{margin-left:auto;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800}
+.status-active{background:var(--green);border:1px solid var(--green);color:#000;font-weight:800;box-shadow:0 2px 10px rgba(0,212,160,.35)}
+.status-inactive{background:rgba(255,68,85,.1);border:1px solid rgba(255,68,85,.2);color:var(--red)}
+.pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pc-item{background:rgba(0,0,0,.2);border-radius:10px;padding:9px 11px}
+.pc-lbl{font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.pc-val{font-size:12px;font-weight:700;color:var(--text)}
+.pc-val.orange{color:var(--orange)}
+.pc-val.green{color:var(--green)}
+.pc-val.red{color:var(--red)}
+
+/* ── TICKET STATUS CARD ── */
+.ticket-card{border-radius:var(--r2);padding:16px;margin-bottom:14px}
+.tc-open{background:rgba(255,68,85,.06);border:1.5px solid rgba(255,68,85,.2)}
+.tc-assigned{background:rgba(255,140,0,.06);border:1.5px solid rgba(255,140,0,.2)}
+.tc-closed{background:rgba(0,212,160,.05);border:1.5px solid rgba(0,212,160,.15)}
+.tc-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.tc-badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.4px}
+.tc-badge.open{background:rgba(255,68,85,.15);color:var(--red);border:1px solid rgba(255,68,85,.25)}
+.tc-badge.assigned{background:rgba(255,140,0,.15);color:var(--orange);border:1px solid rgba(255,140,0,.25)}
+.tc-badge.closed{background:rgba(0,212,160,.12);color:var(--green);border:1px solid rgba(0,212,160,.2)}
+.tc-id{font-size:11px;font-family:'Courier New',monospace;color:var(--blue);font-weight:700;margin-left:auto}
+.tc-rows{display:flex;flex-direction:column;gap:0}
+.tc-row{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.tc-row:last-child{border:none}
+.tc-key{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;padding-top:1px}
+.tc-val{font-size:12px;font-weight:700;text-align:right;max-width:65%}
+.tc-actions{display:flex;gap:8px;margin-top:14px}
+
+/* ── EDIT FORM (inside ticket card) ── */
+.edit-form{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06);display:none}
+.edit-title{font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+
+/* ── LOC BOX ── */
+.loc-box{background:rgba(63,168,240,.08);border:1px solid rgba(63,168,240,.2);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--blue);font-weight:700;display:none;margin-bottom:13px}
+.loc-coords{font-size:10px;color:var(--text2);margin-top:2px;font-weight:600}
+
+/* ── HISTORY ── */
+.hist-item{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:10px;cursor:pointer;transition:.15s}
+.hist-item:hover{border-color:var(--border2)}
+.hist-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.hist-id{font-size:10px;font-family:'Courier New',monospace;color:var(--blue);font-weight:700}
+.hist-rows{display:flex;flex-direction:column;gap:3px}
+.hist-row{display:flex;justify-content:space-between;font-size:11px}
+.hist-key{color:var(--text3)}
+.hist-val{font-weight:700;color:var(--text2)}
+.hist-val.green{color:var(--green)}
+.hist-val.orange{color:var(--orange)}
+.hist-val.red{color:var(--red)}
+.hist-detail{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+
+/* ── SUCCESS ── */
+.success-screen{display:none;padding:24px 14px;text-align:center}
+.success-ico{width:70px;height:70px;background:rgba(0,212,160,.12);border:2px solid rgba(0,212,160,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 14px;animation:pop .4s ease}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.success-title{font-size:22px;font-weight:800;color:var(--green);margin-bottom:4px}
+.success-sub{font-size:13px;color:var(--text2);margin-bottom:20px}
+.confirm-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:18px;text-align:left;margin-bottom:18px}
+.cc-id{font-size:12px;font-weight:800;color:var(--orange);padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px;font-family:'Courier New',monospace}
+.cc-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-row:last-child{border:none}
+.cc-key{color:var(--text2)}
+.cc-val{font-weight:700}
+
+/* ── SPINNER ── */
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:14px}
+.tab-btn{flex:1;padding:10px 4px;font-size:11px;font-weight:800;color:var(--text3);border:none;background:none;font-family:'Nunito',sans-serif;cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.3px;transition:.15s}
+.tab-btn.active{color:var(--orange);border-bottom-color:var(--orange)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ── MISC ── */
+.divider{height:1px;background:var(--border);margin:6px 0 16px}
+.section-lbl{font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.empty-hist{text-align:center;padding:30px 0;color:var(--text3);font-size:13px}
+.empty-ico{font-size:36px;margin-bottom:8px}
+.map-link{color:var(--blue);font-size:11px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:3px}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bar">
+    <div class="logo-row">
+      <img src="triev_logo.png" style="height:32px;width:auto;object-fit:contain">
+      <div>
+        <div class="logo-text" style="display:none">TriEV RSA</div>
+        <div class="logo-sub">Roadside Assistance</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-h">Raise RSA<br><span>Ticket</span></div>
+    <div class="hero-bi">तेज EV सहायता • Fast EV Support • Delhi NCR</div>
+  </div>
+  <div class="steps" id="stepsBar">
+    <div class="snode"><div class="snum active" id="sn1">1</div><div class="slabel active" id="sl1">Verify</div></div>
+    <div class="sline" id="sl-1"></div>
+    <div class="snode"><div class="snum pending" id="sn2">2</div><div class="slabel pending" id="sl2">Profile</div></div>
+    <div class="sline" id="sl-2"></div>
+    <div class="snode"><div class="snum pending" id="sn3">3</div><div class="slabel pending" id="sl3">Ticket</div></div>
+    <div class="sline" id="sl-3"></div>
+    <div class="snode"><div class="snum pending" id="sn4">4</div><div class="slabel pending" id="sl4">Done</div></div>
+  </div>
+</div>
+
+<div class="cnt">
+
+  <!-- HOW TO RAISE -->
+  <div class="howto">
+    <div class="ht-head" onclick="toggleHowto()">
+      <div class="ht-icon">📖</div>
+      <div class="ht-title">How to Raise RSA Ticket &nbsp;<span style="color:var(--text3);font-weight:400">• टिकट कैसे दर्ज करें</span></div>
+      <div class="ht-toggle" id="htToggle">▼ Show</div>
+    </div>
+    <div class="ht-body" id="htBody">
+      <div class="ht-step"><div class="ht-n">1</div><div class="ht-text"><b>Enter Mobile / मोबाइल दर्ज करें</b><br><i>Type your TriEV registered 10-digit mobile number · अपना पंजीकृत मोबाइल नंबर दर्ज करें</i></div></div>
+      <div class="ht-step"><div class="ht-n">2</div><div class="ht-text"><b>Verify Rider / राइडर सत्यापन</b><br><i>Your profile will appear from our database · आपकी प्रोफ़ाइल डेटाबेस से दिखेगी</i></div></div>
+      <div class="ht-step"><div class="ht-n">3</div><div class="ht-text"><b>Capture Location / लोकेशन कैप्चर करें</b><br><i>Allow GPS access so technician can navigate to you · GPS अनुमति दें ताकि तकनीशियन आ सके</i></div></div>
+      <div class="ht-step"><div class="ht-n">4</div><div class="ht-text"><b>Select Issue / समस्या चुनें</b><br><i>Choose the correct issue category · सही समस्या श्रेणी चुनें</i></div></div>
+      <div class="ht-step"><div class="ht-n">5</div><div class="ht-text"><b>Submit Ticket / टिकट दर्ज करें</b><br><i>A technician will be dispatched immediately · तकनीशियन तुरंत भेजा जाएगा</i></div></div>
+    </div>
+  </div>
+
+  <!-- EMERGENCY CONTACTS -->
+  <div class="emg">
+    <div class="emg-title">⚠ Emergency Helpline · आपातकालीन सहायता</div>
+    <div class="emg-row" id="helplineRow">
+      <span class="emg-name">RSA Helpline</span>
+      <span class="emg-num" id="globalHelplineNum">8344191404</span>
+      <button class="call-btn" id="globalHelplineBtn" onclick="window.location.href='tel:8344191404'">📞 Call</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 1: VERIFY ══ -->
+  <div class="card" id="sec-verify">
+    <div class="card-head">
+      <div class="card-ico" style="background:rgba(63,168,240,.14)">🪪</div>
+      <div>
+        <div class="card-title">Rider Verification · राइडर सत्यापन</div>
+        <div class="card-sub">Enter your TriEV registered mobile number</div>
+      </div>
+    </div>
+    <label class="flabel">Registered Mobile · पंजीकृत मोबाइल</label>
+    <input class="finput" id="mobileInput" type="tel" maxlength="10" placeholder="10-digit mobile number" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')">
+    <button class="btn btn-orange" id="verifyBtn" onclick="verifyRider()">Verify Rider · सत्यापित करें →</button>
+    <div id="verifyError"></div>
+  </div>
+
+  <!-- ══ STEP 2: RIDER PROFILE ══ -->
+  <div id="sec-profile" style="display:none">
+
+    <!-- Profile Card -->
+    <div class="profile-card" id="profileCard"></div>
+
+    <!-- Tabs: Active Ticket | Create | History -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-ticket-btn" onclick="switchTab('ticket')">🎫 Active Ticket</button>
+      <button class="tab-btn" id="tab-create-btn" onclick="switchTab('create')" id="tab-create-btn">➕ New Ticket</button>
+      <button class="tab-btn" id="tab-history-btn" onclick="switchTab('history')">📋 History</button>
+    </div>
+
+    <!-- ── TAB: ACTIVE TICKET ── -->
+    <div class="tab-pane active" id="tab-ticket">
+      <div id="openTicketSection"></div>
+    </div>
+
+    <!-- ── TAB: CREATE TICKET ── -->
+    <div class="tab-pane" id="tab-create">
+      <div class="card" id="sec-create">
+        <div class="card-head">
+          <div class="card-ico" style="background:rgba(255,140,0,.14)">📋</div>
+          <div>
+            <div class="card-title">New Ticket · नया टिकट</div>
+            <div class="card-sub">Fill details to raise RSA request</div>
+          </div>
+        </div>
+
+        <label class="flabel">Calling Mobile · कॉलिंग मोबाइल <span>(if different)</span></label>
+        <input class="finput" id="callingMobile" type="tel" maxlength="10" placeholder="Alternate number (optional)" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')">
+
+        <div class="frow">
+          <div>
+            <label class="flabel">Region · क्षेत्र</label>
+            <select class="fsel" id="regionSel">
+              <option value="">Region चुनें</option>
+              <option value="Gurgaon">Gurgaon · गुरुग्राम</option>
+              <option value="West Delhi">West Delhi · पश्चिम दिल्ली</option>
+              <option value="South Delhi">South Delhi · दक्षिण दिल्ली</option>
+              <option value="North Delhi">North Delhi · उत्तर दिल्ली</option>
+              <option value="East Delhi">East Delhi · पूर्व दिल्ली</option>
+              <option value="Noida">Noida · नोएडा</option>
+              <option value="Ghaziabad">Ghaziabad · गाजियाबाद</option>
+            </select>
+          </div>
+          <div>
+            <label class="flabel">Issue · समस्या</label>
+            <select class="fsel" id="issueSel">
+              <option value="">समस्या चुनें</option>
+              <option value="On Off Issue">On Off Issue · चालू बंद</option>
+              <option value="Battery Issue">Battery Issue · बैटरी समस्या</option>
+              <option value="Harness Issue">Harness Issue · हार्नेस समस्या</option>
+              <option value="Parking Issue">Parking Issue · पार्किंग समस्या</option>
+              <option value="Throttle Issue">Throttle Issue · थ्रॉटल समस्या</option>
+              <option value="Tyre">Tyre · टायर पंचर</option>
+              <option value="Wheel Stuck">Wheel Stuck · पहिया जाम</option>
+              <option value="Other">Other · अन्य</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="flabel">Description · विवरण <span>(optional)</span></label>
+        <input class="finput" id="noteInput" placeholder="Briefly describe the problem…">
+
+        <label class="flabel">GPS Location · GPS लोकेशन</label>
+        <button class="btn btn-blue" id="locBtn" onclick="captureLocation()" style="margin-bottom:13px">📡 Capture GPS Location · लोकेशन कैप्चर करें</button>
+        <div class="loc-box" id="locBox">
+          ✓ Location Captured · लोकेशन कैप्चर हुई
+          <div class="loc-coords" id="locCoords"></div>
+        </div>
+
+        <button class="btn btn-orange" id="submitBtn" onclick="createTicket()" style="opacity:.5">
+          📍 Capture Location First · पहले लोकेशन कैप्चर करें
+        </button>
+      </div>
+    </div>
+
+    <!-- ── TAB: HISTORY ── -->
+    <div class="tab-pane" id="tab-history">
+      <div id="historySection"></div>
+    </div>
+
+  </div>
+
+  <!-- ══ SUCCESS ══ -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-ico">✅</div>
+    <div class="success-title">Ticket Raised! · टिकट दर्ज!</div>
+    <div class="success-sub">Technician is being dispatched · तकनीशियन भेजा जा रहा है</div>
+    <div class="confirm-card" id="confirmCard"></div>
+    <button class="btn btn-ghost" style="margin-bottom:10px" onclick="resetAll()">Raise Another · नया टिकट</button>
+    <button class="btn btn-outline" onclick="viewMyTickets()">View My Ticket · मेरा टिकट देखें</button>
+  </div>
+
+</div><!-- /cnt -->
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let riderData  = null;
+let locLat     = null;
+let locLng     = null;
+let locReady   = false;
+let editMode   = false;
+
+const REGIONS = ['Gurgaon','West Delhi','South Delhi','North Delhi','East Delhi','Noida','Ghaziabad'];
+const ISSUES  = ['On Off Issue','Battery Issue','Harness Issue','Parking Issue','Throttle Issue','Tyre','Wheel Stuck','Other'];
+
+// ══════════════════════════════════════════════
+// STEP INDICATOR
+// ══════════════════════════════════════════════
+function setStep(n){
+  [1,2,3,4].forEach(i=>{
+    const done=i<n, active=i===n;
+    const sn=document.getElementById('sn'+i);
+    const sl=document.getElementById('sl'+i);
+    sn.className='snum '+(done?'done':active?'active':'pending');
+    sl.className='slabel '+(done?'done':active?'active':'pending');
+    sn.textContent=done?'✓':i;
+    if(i<4) document.getElementById('sl-'+i).className='sline '+(i<n?'done':'');
+  });
+}
+
+// ══════════════════════════════════════════════
+// HOW TO TOGGLE
+// ══════════════════════════════════════════════
+function toggleHowto(){
+  const b=document.getElementById('htBody');
+  const t=document.getElementById('htToggle');
+  const open=b.style.display==='block';
+  b.style.display=open?'none':'block';
+  t.textContent=open?'▼ Show':'▲ Hide';
+}
+
+// ══════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════
+function switchTab(t){
+  ['ticket','create','history'].forEach(x=>{
+    document.getElementById('tab-'+x).classList.toggle('active',x===t);
+    document.getElementById('tab-'+x+'-btn').classList.toggle('active',x===t);
+  });
+}
+
+// ══════════════════════════════════════════════
+// VERIFY RIDER  →  POST /verify_rider
+// ══════════════════════════════════════════════
+async function verifyRider(){
+  const mobile = document.getElementById('mobileInput').value.trim();
+  const errDiv = document.getElementById('verifyError');
+  const btn    = document.getElementById('verifyBtn');
+  errDiv.innerHTML = '';
+
+  if(mobile.length !== 10){
+    showVerifyError('Enter a valid 10-digit number · 10 अंक का नंबर दर्ज करें');
+    return;
+  }
+
+  btn.disabled  = true;
+  btn.innerHTML = '<span class="spin"></span>Verifying…';
+
+  try {
+    const res  = await fetch(`/verify_rider?mobile_no=${mobile}`, { method:'POST' });
+    const data = await res.json();
+
+    if(!res.ok){
+      showVerifyError(
+        res.status===404
+          ? '✕ Mobile not registered · मोबाइल नंबर पंजीकृत नहीं है<br><small style="font-weight:400">Contact your TL to register · अपने TL से संपर्क करें</small>'
+          : (data.detail||'Verification failed')
+      );
+      return;
+    }
+
+    riderData = data;
+    setStep(2);
+    renderProfile(data);
+    renderOpenTicket(data.open_ticket);
+    renderHistory(data.ticket_history||[]);
+    document.getElementById('sec-verify').style.display = 'none';
+    document.getElementById('sec-profile').style.display = 'block';
+
+    // Pre-fill region
+    if(data.region) document.getElementById('regionSel').value = data.region;
+
+    // If no open ticket, switch to create tab
+    if(!data.open_ticket){
+      switchTab('create');
+    }
+
+    document.getElementById('sec-profile').scrollIntoView({behavior:'smooth',block:'start'});
+
+  } catch(e){
+    showVerifyError('Server error · सर्वर से कनेक्ट नहीं हो सका. Please try again.');
+  } finally {
+    btn.disabled  = false;
+    btn.innerHTML = 'Verify Rider · सत्यापित करें →';
+  }
+}
+
+function showVerifyError(msg){
+  document.getElementById('verifyError').innerHTML =
+    `<div style="background:rgba(255,68,85,.08);border:1px solid rgba(255,68,85,.2);
+      border-radius:10px;padding:11px 13px;margin-top:10px;font-size:13px;
+      color:var(--red);font-weight:700;line-height:1.5">${msg}</div>`;
+}
+
+// ══════════════════════════════════════════════
+// RENDER RIDER PROFILE CARD
+// ══════════════════════════════════════════════
+function renderProfile(d){
+  const initials = (d.rider_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const statusCls = (d.rider_status||'').toLowerCase().includes('active') ? 'status-active' : 'status-inactive';
+
+  document.getElementById('profileCard').innerHTML = `
+    <div class="pc-top">
+      <div class="pc-avatar">${initials}</div>
+      <div style="flex:1">
+        <div class="pc-name">${d.rider_name}</div>
+        <div class="pc-id">ID: ${d.rider_id} · ${d.mobile_no}</div>
+      </div>
+      <div class="pc-status ${statusCls}">${d.rider_status||'Active'}</div>
+    </div>
+    <div class="pc-grid">
+      <div class="pc-item">
+        <div class="pc-lbl">Chassis No · चेसिस</div>
+        <div class="pc-val orange">${d.chassis_no||'—'}</div>
+      </div>
+      <div class="pc-item">
+        <div class="pc-lbl">Team Lead · टीम लीड</div>
+        <div class="pc-val">${d.tl_name||'—'}</div>
+      </div>
+      <div class="pc-item">
+        <div class="pc-lbl">Manager · मैनेजर</div>
+        <div class="pc-val" style="font-size:11px">${d.reporting_manager||'—'}</div>
+      </div>
+      <div class="pc-item">
+        <div class="pc-lbl">Skip Manager</div>
+        <div class="pc-val" style="font-size:11px">${d.skip_manager||'—'}</div>
+      </div>
+      <div class="pc-item">
+        <div class="pc-lbl">Total Tickets</div>
+        <div class="pc-val">${d.total_tickets}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════
+// RENDER OPEN TICKET
+// ══════════════════════════════════════════════
+function renderOpenTicket(t){
+  const el = document.getElementById('openTicketSection');
+
+  if(!t){
+    el.innerHTML = `
+      <div style="text-align:center;padding:28px 0;color:var(--text3)">
+        <div style="font-size:36px;margin-bottom:8px">🎫</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text2)">No active ticket</div>
+        <div style="font-size:12px;margin-top:3px">नो एक्टिव टिकट</div>
+        <button class="btn btn-orange btn-sm" style="margin-top:16px;width:auto;padding:10px 24px"
+          onclick="switchTab('create')">
+          ➕ Raise New Ticket · नया टिकट दर्ज करें
+        </button>
+      </div>`;
+    return;
+  }
+
+  const statusCls = t.status==='OPEN'?'open':t.status==='ASSIGNED'?'assigned':'closed';
+  const cardCls   = `ticket-card tc-${statusCls}`;
+  const time      = t.ticket_time ? fmtTime(t.ticket_time) : '—';
+  const mapHref   = t.latitude&&t.longitude
+    ? `https://www.google.com/maps?q=${t.latitude},${t.longitude}` : null;
+
+  el.innerHTML = `
+    <div class="${cardCls}" id="openTicketCard">
+      <div class="tc-head">
+        <span class="tc-badge ${statusCls}">${t.status}</span>
+        <span class="tc-id">${t.ticket_id}</span>
+      </div>
+      <div class="tc-rows">
+        <div class="tc-row"><span class="tc-key">Issue · समस्या</span><span class="tc-val">${t.issue}</span></div>
+        ${t.note?`<div class="tc-row"><span class="tc-key">Note · नोट</span><span class="tc-val" style="color:var(--text2)">${t.note}</span></div>`:''}
+        <div class="tc-row"><span class="tc-key">Region · क्षेत्र</span><span class="tc-val">${t.region||'—'}</span></div>
+        <div class="tc-row"><span class="tc-key">Time · समय</span><span class="tc-val">${time}</span></div>
+        <div class="tc-row"><span class="tc-key">Calling Mobile</span><span class="tc-val">${t.calling_mobile||'—'}</span></div>
+        <div class="tc-row"><span class="tc-key">Location · लोकेशन</span>
+          <span class="tc-val">
+            ${mapHref
+              ? `<a class="map-link" href="${mapHref}" target="_blank">📍 Open Map ↗</a>`
+              : (t.latitude?`${t.latitude.toFixed(4)}, ${t.longitude.toFixed(4)}`:'—')}
+          </span>
+        </div>
+        ${t.status==='ASSIGNED'&&t.technician?`
+        <div class="tc-row" style="background:rgba(255,152,0,.06);border:1px solid rgba(255,152,0,.15);border-radius:10px;padding:10px 12px;margin:4px 0;display:flex;align-items:center;gap:10px">
+          <div style="font-size:24px">🔧</div>
+          <div style="flex:1">
+            <div style="font-size:10px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Your Technician · आपका तकनीशियन</div>
+            <div style="font-size:15px;font-weight:800;color:var(--orange)">${t.technician}</div>
+          </div>
+          ${t.tech_mobile?`<a href="tel:${t.tech_mobile}" style="background:var(--orange);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:800;text-decoration:none;display:flex;align-items:center;gap:4px;font-family:inherit;white-space:nowrap">📞 Call Tech</a>`:''}
+        </div>`:
+        t.technician?`<div class="tc-row"><span class="tc-key">Technician · तकनीशियन</span><span class="tc-val" style="color:var(--orange)">${t.technician}</span></div>`:''}
+        ${t.status==='ASSIGNED'&&t.assigned_at?`<div class="tc-row"><span class="tc-key">Assigned At</span><span class="tc-val">${fmtTime(t.assigned_at)}</span></div>`:''}
+      </div>
+
+      ${t.status!=='CLOSED'?`
+      <div class="tc-actions">
+        <button class="btn btn-outline btn-sm" onclick="toggleEditTicket()">✏️ Edit · संपादित करें</button>
+        <button class="btn btn-blue btn-sm" onclick="refreshLocation('${t.ticket_id}')">📍 Update Location</button>
+      </div>
+
+      <!-- EDIT FORM -->
+      <div class="edit-form" id="editForm">
+        <div class="edit-title">Edit Ticket Details · टिकट संपादित करें</div>
+        <label class="flabel">Region · क्षेत्र</label>
+        <select class="fsel" id="edit-region">
+          <option value="">— No change —</option>
+          ${REGIONS.map(r=>`<option value="${r}" ${r===t.region?'selected':''}>${r}</option>`).join('')}
+        </select>
+        <label class="flabel">Issue Category · समस्या श्रेणी</label>
+        <select class="fsel" id="edit-issue">
+          <option value="">— No change —</option>
+          ${ISSUES.map(i=>`<option value="${i}" ${i===t.issue?'selected':''}>${i}</option>`).join('')}
+        </select>
+        <label class="flabel">Description · विवरण</label>
+        <input class="finput" id="edit-note" value="${t.note||''}" placeholder="Update description…">
+        <label class="flabel">Calling Mobile</label>
+        <input class="finput" id="edit-calling" type="tel" maxlength="10" value="${t.calling_mobile||''}" placeholder="Alternate number">
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-orange btn-sm" style="flex:1" onclick="saveEditTicket('${t.ticket_id}')">
+            💾 Save Changes · सेव करें
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleEditTicket()">Cancel</button>
+        </div>
+      </div>
+      `:''}
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+// RENDER HISTORY
+// ══════════════════════════════════════════════
+function renderHistory(tickets){
+  const el = document.getElementById('historySection');
+  if(!tickets.length){
+    el.innerHTML = `<div class="empty-hist"><div class="empty-ico">📋</div>No previous tickets · कोई पुराना टिकट नहीं</div>`;
+    return;
+  }
+
+  const summary = `
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <div style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:800;font-family:'Courier New',monospace;color:var(--text)">${tickets.length}</div>
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:700;margin-top:2px">Total Tickets</div>
+      </div>
+      <div style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:800;font-family:'Courier New',monospace;color:var(--green)">${tickets.filter(t=>t.status==='CLOSED').length}</div>
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:700;margin-top:2px">Resolved</div>
+      </div>
+      <div style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:800;font-family:'Courier New',monospace;color:var(--orange)">${tickets.filter(t=>t.status!=='CLOSED').length}</div>
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:700;margin-top:2px">Open/Assigned</div>
+      </div>
+    </div>`;
+
+  const items = tickets.map((t,i)=>{
+    const statusColor = t.status==='CLOSED'?'green':t.status==='ASSIGNED'?'orange':'red';
+    const mapHref = t.latitude&&t.longitude
+      ? `https://www.google.com/maps?q=${t.latitude},${t.longitude}` : null;
+    return `
+      <div class="hist-item" onclick="toggleHistDetail(${i})">
+        <div class="hist-top">
+          <span class="hist-id">${t.ticket_id}</span>
+          <span class="tc-badge ${t.status.toLowerCase()}" style="font-size:9px">${t.status}</span>
+          <span style="margin-left:auto;font-size:10px;color:var(--text3)">${t.ticket_time?fmtTime(t.ticket_time):'—'}</span>
+        </div>
+        <div class="hist-rows">
+          <div class="hist-row"><span class="hist-key">Issue</span><span class="hist-val ${statusColor}">${t.issue}</span></div>
+          <div class="hist-row"><span class="hist-key">Region</span><span class="hist-val">${t.region||'—'}</span></div>
+          ${t.technician?`<div class="hist-row"><span class="hist-key">Technician</span><span class="hist-val orange">${t.technician}</span></div>`:''}
+        </div>
+        <div class="hist-detail" id="hd-${i}">
+          ${t.note?`<div class="hist-row"><span class="hist-key">Note</span><span class="hist-val" style="color:var(--text2)">${t.note}</span></div>`:''}
+          ${t.resolution_note?`<div class="hist-row" style="margin-top:4px"><span class="hist-key">Resolution</span><span class="hist-val green">${t.resolution_note}</span></div>`:''}
+          ${t.closed_at?`<div class="hist-row" style="margin-top:4px"><span class="hist-key">Closed At</span><span class="hist-val">${fmtTime(t.closed_at)}</span></div>`:''}
+          ${mapHref?`<div style="margin-top:8px"><a class="map-link" href="${mapHref}" target="_blank">📍 View Location on Map ↗</a></div>`:''}
+        </div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = summary + items;
+}
+
+function toggleHistDetail(i){
+  const el=document.getElementById('hd-'+i);
+  el.style.display=el.style.display==='block'?'none':'block';
+}
+
+// ══════════════════════════════════════════════
+// EDIT TICKET
+// ══════════════════════════════════════════════
+function toggleEditTicket(){
+  const f=document.getElementById('editForm');
+  f.style.display=f.style.display==='block'?'none':'block';
+}
+
+async function saveEditTicket(ticketId){
+  const region  = document.getElementById('edit-region').value  || null;
+  const issue   = document.getElementById('edit-issue').value   || null;
+  const note    = document.getElementById('edit-note').value.trim()    || null;
+  const calling = document.getElementById('edit-calling').value.trim() || null;
+
+  const params = new URLSearchParams({ ticket_id: ticketId });
+  if(region)  params.append('region',         region);
+  if(issue)   params.append('issue_category', issue);
+  if(note)    params.append('issue_note',      note);
+  if(calling) params.append('calling_mobile', calling);
+  if(locLat)  params.append('latitude',       locLat);
+  if(locLng)  params.append('longitude',      locLng);
+
+  try {
+    const res = await fetch('/update_ticket?'+params.toString(), { method:'POST' });
+    if(res.ok){
+      // Refresh
+      const mRes  = await fetch(`/verify_rider?mobile_no=${riderData.mobile_no}`, {method:'POST'});
+      const mData = await mRes.json();
+      if(mRes.ok){
+        riderData = mData;
+        renderOpenTicket(mData.open_ticket);
+        renderHistory(mData.ticket_history||[]);
+      }
+      showToast('✓ Ticket updated · अपडेट हो गया');
+    } else {
+      const d=await res.json();
+      showToast((d.detail||'Update failed'), true);
+    }
+  } catch(e){
+    showToast('Server error · सर्वर एरर', true);
+  }
+}
+
+// ══════════════════════════════════════════════
+// GPS OPTIONS — high accuracy
+// ══════════════════════════════════════════════
+const GPS_OPTS = {
+  enableHighAccuracy: true,
+  timeout: 15000,
+  maximumAge: 0
+};
+
+function getGPSError(err){
+  if(err.code===1) return 'GPS blocked · Please allow location access in browser settings';
+  if(err.code===2) return 'GPS unavailable · Check device location settings';
+  if(err.code===3) return 'GPS timeout · Move to open area and try again';
+  return 'GPS error · GPS नहीं मिला';
+}
+
+// ══════════════════════════════════════════════
+// UPDATE LOCATION on existing ticket
+// ══════════════════════════════════════════════
+async function refreshLocation(ticketId){
+  showToast('Getting GPS… please wait');
+  if(!navigator.geolocation){
+    showToast('GPS not supported on this device', true); return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      locLat = pos.coords.latitude;
+      locLng = pos.coords.longitude;
+      const acc = Math.round(pos.coords.accuracy);
+      const params = new URLSearchParams({ticket_id:ticketId, latitude:locLat, longitude:locLng});
+      try{
+        const res = await fetch('/update_ticket?'+params.toString(), {method:'POST'});
+        if(res.ok) showToast('📍 Location updated · accuracy: '+acc+'m');
+        else showToast('Update failed',true);
+      }catch(e){ showToast('Server error',true); }
+    },
+    err => showToast(getGPSError(err), true),
+    GPS_OPTS
+  );
+}
+
+// ══════════════════════════════════════════════
+// CAPTURE LOCATION (for new ticket)
+// ══════════════════════════════════════════════
+function captureLocation(){
+  const btn = document.getElementById('locBtn');
+  btn.innerHTML = '<span class="spin"></span>Getting GPS…';
+  btn.disabled  = true;
+
+  if(!navigator.geolocation){
+    btn.innerHTML = '📡 Capture GPS Location · लोकेशन कैप्चर करें';
+    btn.disabled  = false;
+    showToast('GPS not supported on this device', true);
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      locLat   = pos.coords.latitude;
+      locLng   = pos.coords.longitude;
+      locReady = true;
+      const acc = Math.round(pos.coords.accuracy);
+      showToast('📍 Location captured · accuracy: '+acc+'m');
+      showLocBox();
+    },
+    err => {
+      btn.innerHTML = '📡 Retry GPS · दोबारा कोशिश करें';
+      btn.disabled  = false;
+      showToast(getGPSError(err), true);
+      // Still allow submit without location
+      locLat   = null;
+      locLng   = null;
+      locReady = false;
+    },
+    GPS_OPTS
+  );
+}
+
+
+
+function showLocBox(fallback=false){
+  const lb = document.getElementById('locBox');
+  lb.style.display = 'block';
+  document.getElementById('locCoords').textContent =
+    `${locLat.toFixed(6)}, ${locLng.toFixed(6)}${fallback?' (approximate · अनुमानित)':''}`;
+  const btn = document.getElementById('locBtn');
+  btn.innerHTML    = '📍 Location Captured ✓';
+  btn.disabled     = false;
+  btn.className    = 'btn btn-green';
+  // Unlock submit button
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.style.opacity = '1';
+  submitBtn.innerHTML = '🎫 Raise RSA Ticket Now · टिकट दर्ज करें';
+}
+
+// ══════════════════════════════════════════════
+// CREATE TICKET  →  POST /create_ticket
+// ══════════════════════════════════════════════
+async function createTicket(){
+  if(!riderData){ return; }
+
+  const region  = document.getElementById('regionSel').value;
+  const issue   = document.getElementById('issueSel').value;
+  const note    = document.getElementById('noteInput').value.trim();
+  const calling = document.getElementById('callingMobile').value.trim();
+
+  if(!region){ showToast('Please select region · क्षेत्र चुनें', true); return; }
+  if(!issue){  showToast('Please select issue · समस्या चुनें',  true); return; }
+  if(!locReady){
+    showToast('📍 पहले लोकेशन कैप्चर करें · Capture location first', true);
+    const locBtn = document.getElementById('locBtn');
+    locBtn.scrollIntoView({behavior:'smooth', block:'center'});
+    locBtn.style.border = '2px solid var(--red)';
+    locBtn.style.boxShadow = '0 0 0 4px rgba(255,68,85,.25)';
+    setTimeout(()=>{ locBtn.style.border=''; locBtn.style.boxShadow=''; }, 2500);
+    captureLocation();
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled  = true;
+  btn.innerHTML = '<span class="spin"></span>Raising ticket…';
+
+  try {
+    const params = new URLSearchParams({
+      rider_id:       riderData.rider_id,
+      mobile_no:      riderData.mobile_no,
+      calling_mobile: calling || riderData.mobile_no,
+      region,
+      issue_category: issue,
+      issue_note:     note || issue,
+      latitude:       locLat,
+      longitude:      locLng,
+    });
+
+    const res  = await fetch('/create_ticket?'+params.toString(), { method:'POST' });
+    const data = await res.json();
+
+    if(!res.ok){
+      showToast(data.detail || 'Failed to create ticket', true);
+      return;
+    }
+
+    // Show success
+    document.getElementById('sec-profile').style.display  = 'none';
+    document.getElementById('sec-verify').style.display   = 'none';
+    document.getElementById('stepsBar').style.display     = 'none';
+    setStep(4);
+
+    const time = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false});
+    document.getElementById('confirmCard').innerHTML = `
+      <div class="cc-id">🎫 ${data.ticket_id}</div>
+      <div class="cc-row"><span class="cc-key">Rider · राइडर</span><span class="cc-val">${riderData.rider_name}</span></div>
+      <div class="cc-row"><span class="cc-key">Chassis</span><span class="cc-val">${riderData.chassis_no}</span></div>
+      <div class="cc-row"><span class="cc-key">Issue · समस्या</span><span class="cc-val">${issue}</span></div>
+      <div class="cc-row"><span class="cc-key">Region · क्षेत्र</span><span class="cc-val">${region}</span></div>
+      ${note?`<div class="cc-row"><span class="cc-key">Note</span><span class="cc-val">${note}</span></div>`:''}
+      <div class="cc-row"><span class="cc-key">Time · समय</span><span class="cc-val">${time}</span></div>
+      <div class="cc-row"><span class="cc-key">Calling Mobile</span><span class="cc-val">${calling||riderData.mobile_no}</span></div>
+      <div class="cc-row"><span class="cc-key">Location</span><span class="cc-val" style="font-size:11px">${locLat.toFixed(5)}, ${locLng.toFixed(5)}</span></div>
+      <div class="cc-row"><span class="cc-key">Status</span><span class="cc-val" style="color:var(--orange)">OPEN — Dispatching… 🚀</span></div>
+    `;
+    document.getElementById('successScreen').style.display = 'block';
+    document.getElementById('successScreen').scrollIntoView({behavior:'smooth'});
+    if(navigator.vibrate) navigator.vibrate([60,30,60]);
+
+  } catch(e){
+    showToast('Server error · कृपया पुनः प्रयास करें', true);
+  } finally {
+    btn.disabled  = false;
+    btn.innerHTML = '🎫 Raise RSA Ticket Now · टिकट दर्ज करें';
+  }
+}
+
+// ══════════════════════════════════════════════
+// VIEW MY TICKETS (after creation)
+// ══════════════════════════════════════════════
+async function viewMyTickets(){
+  document.getElementById('successScreen').style.display = 'none';
+  document.getElementById('stepsBar').style.display     = 'flex';
+  document.getElementById('sec-profile').style.display  = 'block';
+  setStep(3);
+  // Refresh data
+  try {
+    const res  = await fetch(`/verify_rider?mobile_no=${riderData.mobile_no}`, {method:'POST'});
+    const data = await res.json();
+    if(res.ok){
+      riderData = data;
+      renderProfile(data);
+      renderOpenTicket(data.open_ticket);
+      renderHistory(data.ticket_history||[]);
+    }
+  } catch(e){}
+  switchTab('ticket');
+}
+
+// ══════════════════════════════════════════════
+// RESET
+// ══════════════════════════════════════════════
+function resetAll(){
+  riderData=null;locLat=null;locLng=null;locReady=false;
+  document.getElementById('mobileInput').value='';
+  document.getElementById('verifyError').innerHTML='';
+  document.getElementById('sec-verify').style.display='block';
+  document.getElementById('sec-profile').style.display='none';
+  document.getElementById('successScreen').style.display='none';
+  document.getElementById('stepsBar').style.display='flex';
+  setStep(1);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function fmtTime(iso){
+  if(!iso) return '—';
+  try{
+    const d=new Date(iso);
+    return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
+      +' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false});
+  }catch(e){return iso.slice(0,16).replace('T',' ');}
+}
+
+let toastTimer;
+function showToast(msg, isErr=false){
+  let el=document.getElementById('toast');
+  if(!el){
+    el=document.createElement('div');
+    el.id='toast';
+    el.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 18px;border-radius:30px;font-size:13px;font-weight:700;z-index:9999;transition:opacity .3s;max-width:90%;text-align:center;font-family:Nunito,sans-serif';
+    document.body.appendChild(el);
+  }
+  el.textContent=msg;
+  el.style.background = isErr ? 'rgba(255,68,85,.9)' : 'rgba(0,212,160,.9)';
+  el.style.color       = '#fff';
+  el.style.opacity     = '1';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{ el.style.opacity='0'; },3000);
+}
+
+// Load helpline from admin settings
+(async function loadHelpline(){
+  try{
+    const r   = await fetch('/settings/helpline');
+    const d   = await r.json();
+    const num     = d.helpline_number || '8344191404';
+    const enabled = d.helpline_enabled !== false;
+    // Hide entire emergency bar if disabled
+    const bar = document.querySelector('.emg');
+    if(!enabled){
+      if(bar) bar.style.display='none';
+      return;
+    }
+    const numEl = document.getElementById('globalHelplineNum');
+    const btnEl = document.getElementById('globalHelplineBtn');
+    if(numEl) numEl.textContent = num;
+    if(btnEl) btnEl.onclick = ()=>{ window.location.href='tel:'+num; };
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

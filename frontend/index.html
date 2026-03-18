@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0e2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>TriEV RSA — आपकी यात्रा नहीं रुकेगी</title>
+<meta name="description" content="TriEV RSA — 24/7 EV Roadside Assistance Delhi NCR. Raise a support ticket instantly.">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:'Plus Jakarta Sans',sans-serif;overflow-x:hidden}
+
+/* HERO — full screen background image */
+.hero{
+  min-height:100vh;
+  background:url('RSA_FINAL.png') no-repeat center top;
+  background-size:cover;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+}
+/* Dark gradient overlay so button is readable */
+.hero::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(
+    to bottom,
+    rgba(10,14,42,.15) 0%,
+    rgba(10,14,42,.1) 40%,
+    rgba(10,14,42,.75) 70%,
+    rgba(10,14,42,.96) 100%
+  );
+  pointer-events:none;
+}
+
+/* LIVE BADGE — top right */
+.live-badge{
+  position:absolute;
+  top:16px;
+  right:16px;
+  z-index:10;
+  background:rgba(0,230,118,.12);
+  border:1px solid rgba(0,230,118,.3);
+  border-radius:20px;
+  padding:5px 12px;
+  font-size:11px;
+  font-weight:700;
+  color:#00e676;
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+.pulse{width:5px;height:5px;background:#00e676;border-radius:50%;animation:p 1.5s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* BOTTOM ACTION AREA */
+.action-area{
+  position:relative;
+  z-index:10;
+  margin-top:auto;
+  padding:0 20px 32px;
+  max-width:500px;
+  width:100%;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+/* HELPLINE BAR */
+.helpline-bar{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  background:rgba(255,255,255,.08);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  padding:10px 16px;
+  margin-bottom:12px;
+}
+.helpline-label{font-size:11px;color:rgba(255,255,255,.6);font-weight:600}
+.helpline-num{font-size:16px;font-weight:800;color:#fff;font-family:'Courier New',monospace;letter-spacing:.5px}
+.helpline-call{
+  background:rgba(0,230,118,.15);
+  border:1px solid rgba(0,230,118,.3);
+  border-radius:8px;
+  padding:6px 14px;
+  font-size:12px;
+  font-weight:700;
+  color:#00e676;
+  cursor:pointer;
+  border-color:rgba(0,230,118,.3);
+  font-family:'Plus Jakarta Sans',sans-serif;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+
+/* MAIN CTA BUTTON */
+.btn-rsa{
+  width:100%;
+  padding:20px 24px;
+  border:none;
+  border-radius:16px;
+  background:linear-gradient(135deg,#ff7a00,#ffb300);
+  color:#fff;
+  font-size:20px;
+  font-weight:800;
+  cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  box-shadow:0 8px 32px rgba(255,122,0,.55);
+  position:relative;
+  overflow:hidden;
+  margin-bottom:10px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  animation:glow 2.5s infinite;
+}
+.btn-rsa::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.2),transparent)}
+.btn-rsa:active{transform:scale(.97)}
+@keyframes glow{0%,100%{box-shadow:0 8px 32px rgba(255,122,0,.5)}50%{box-shadow:0 8px 50px rgba(255,122,0,.8)}}
+.btn-rsa-sub{font-size:13px;font-weight:500;opacity:.88}
+
+/* STAFF LINK — tiny, bottom right corner */
+.staff-link{
+  position:fixed;
+  bottom:10px;
+  right:14px;
+  font-size:10px;
+  color:rgba(255,255,255,.2);
+  text-decoration:none;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  z-index:100;
+  padding:4px 8px;
+  border-radius:6px;
+  transition:.2s;
+}
+.staff-link:hover{color:rgba(255,255,255,.5);background:rgba(255,255,255,.08)}
+
+/* FEATURE STRIP */
+.feat-strip{
+  display:flex;
+  gap:7px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.feat{
+  background:rgba(255,255,255,.08);
+  backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;
+  padding:5px 12px;
+  font-size:10px;
+  font-weight:700;
+  color:rgba(255,255,255,.7);
+}
+
+@media(max-width:380px){
+  .btn-rsa{font-size:17px;padding:17px 18px}
+  .helpline-num{font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+
+  <!-- BOTTOM ACTION AREA -->
+  <div class="action-area">
+
+    <!-- FEATURE PILLS -->
+    <div class="feat-strip">
+      <div class="feat">⚡ Fast Response</div>
+      <div class="feat">🔧 Trained Technicians</div>
+      <div class="feat">📍 Delhi NCR</div>
+      <div class="feat">🆓 Free Service</div>
+    </div>
+
+    <!-- HELPLINE BAR -->
+    <div class="helpline-bar" id="helplineBar">
+      <div>
+        <div class="helpline-label">RSA Helpline · हेल्पलाइन</div>
+        <div class="helpline-num" id="helplineNum">Loading…</div>
+      </div>
+      <a class="helpline-call" id="helplineCallBtn" href="#">📞 Call</a>
+    </div>
+
+    <!-- MAIN CTA -->
+    <button class="btn-rsa" onclick="raiseTicket()">
+      🆘 Raise RSA Ticket Now
+      <span class="btn-rsa-sub">गाड़ी खराब? तुरंत टिकट दर्ज करें</span>
+    </button>
+
+  </div>
+</div>
+
+<!-- Staff login — hidden from riders -->
+<a class="staff-link" href="/app/login.html">Staff Login</a>
+
+<script>
+// Load helpline number from API (admin can update anytime)
+async function loadHelpline(){
+  try{
+    const res  = await fetch('/settings/helpline');
+    const data = await res.json();
+    const num     = data.helpline_number || '8344191404';
+    const enabled = data.helpline_enabled !== false;
+    const bar = document.getElementById('helplineBar');
+    if(!enabled){
+      if(bar) bar.style.display='none';
+      return;
+    }
+    document.getElementById('helplineNum').textContent  = num;
+    document.getElementById('helplineCallBtn').href     = 'tel:'+num;
+  } catch(e){
+    // Keep default
+  }
+}
+
+function raiseTicket(){
+  if(navigator.vibrate) navigator.vibrate(60);
+  window.location.href = '/app/rider_ticket.html';
+}
+
+loadHelpline();
+</script>
+</body>
+</html>

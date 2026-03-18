@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>triEV RSA — Technician</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0b1120;--bg2:#111827;--bg3:#172032;--border:#1e2f47;--border2:#253650;
+  --text:#eef2ff;--text2:#6b8cba;--text3:#304a6a;
+  --green:#00e676;--orange:#ffab40;--red:#ff5252;--blue:#40c4ff;--indigo:#7c83fd;
+  --green-d:rgba(0,230,118,.1);--orange-d:rgba(255,171,64,.1);--red-d:rgba(255,82,82,.1);--blue-d:rgba(64,196,255,.08);
+  font-family:'Plus Jakarta Sans',sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--text)}
+body{max-width:480px;margin:0 auto;overflow-x:hidden}
+
+/* GPS BLOCKER */
+.gps-blocker{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
+.gps-icon{font-size:64px;margin-bottom:20px;animation:bounce 1s infinite alternate}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+.gps-title{font-size:22px;font-weight:800;margin-bottom:8px;color:var(--green)}
+.gps-sub{font-size:14px;color:var(--text2);line-height:1.5;margin-bottom:24px}
+.gps-btn{width:100%;padding:16px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--green),#00b060);color:#000;font-size:16px;font-weight:800;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif}
+
+/* LOGIN */
+.login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 30% 20%,rgba(124,131,253,.12) 0%,transparent 60%)}
+.login-icon{width:68px;height:68px;background:linear-gradient(135deg,var(--indigo),#5c6bc0);border-radius:18px;display:grid;place-items:center;font-size:30px;margin-bottom:16px;box-shadow:0 10px 30px rgba(124,131,253,.3)}
+.login-title{font-size:24px;font-weight:800;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--text2);margin-bottom:28px;font-weight:500}
+.lcard{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:22px;width:100%}
+.lbl{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;display:block}
+.inp{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:12px 13px;font-size:15px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;outline:none;transition:.2s;margin-bottom:12px}
+.inp:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(124,131,253,.1)}
+.inp::placeholder{color:var(--text3);font-weight:400}
+.btn-login{width:100%;padding:14px;border-radius:11px;border:none;background:linear-gradient(135deg,var(--indigo),#5c6bc0);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:0 6px 20px rgba(124,131,253,.3)}
+
+
+/* APP */
+.app-screen{display:none;min-height:100vh;flex-direction:column;padding-bottom:70px}
+
+/* HEADER */
+.app-hd{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+.hd-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--indigo),#5c6bc0);display:grid;place-items:center;font-size:13px;font-weight:800;flex-shrink:0}
+.hd-name{font-size:13px;font-weight:700}
+.hd-sub{font-size:10px;color:var(--text2);margin-top:1px}
+.status-btn{display:flex;align-items:center;gap:5px;border-radius:20px;padding:5px 11px;cursor:pointer;font-size:11px;font-weight:700;transition:.2s;border:none;font-family:'Plus Jakarta Sans',sans-serif}
+.btn-available{background:rgba(0,230,118,.12);border:1px solid rgba(0,230,118,.2);color:var(--green)}
+.btn-busy{background:rgba(255,82,82,.1);border:1px solid rgba(255,82,82,.2);color:var(--red)}
+.gps-indicator{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--green);background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.15);border-radius:10px;padding:3px 8px;margin-left:auto}
+.gps-dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:p 1.4s infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* BOTTOM NAV */
+.bnav{background:var(--bg2);border-top:1px solid var(--border);display:flex;position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:100}
+.bn{flex:1;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--text3);font-size:9px;font-weight:700;transition:.15s;border:none;background:none;font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:.3px;position:relative}
+.bn.on{color:var(--indigo)}
+.bn-ico{font-size:19px;transition:.2s}
+.bn.on .bn-ico{transform:translateY(-2px)}
+.bnbadge{position:absolute;top:5px;right:calc(50% - 16px);background:var(--red);color:#fff;border-radius:10px;padding:1px 5px;font-size:9px}
+
+/* VIEWS */
+.view{display:none;padding:14px}
+.view.on{display:block}
+
+/* STAT ROW */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.sv{font-size:22px;font-weight:800;font-family:'IBM Plex Mono','Courier New',monospace;line-height:1}
+.sl{font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:700;margin-top:3px;letter-spacing:.5px}
+
+/* TICKET CARD */
+.tcard{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:15px;margin-bottom:12px;transition:.15s}
+.tcard.urgent{border-left:3px solid var(--red)}
+.tcard.mine{border-left:3px solid var(--orange)}
+.tcard-hd{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.tid{font-size:10px;font-family:'Courier New',monospace;color:var(--blue);font-weight:600}
+.badge{padding:2px 8px;border-radius:20px;font-size:9px;font-weight:800;letter-spacing:.4px}
+.bopen{background:var(--red-d);color:var(--red);border:1px solid rgba(255,82,82,.2)}
+.bassigned{background:var(--orange-d);color:var(--orange);border:1px solid rgba(255,171,64,.2)}
+.bclosed{background:var(--green-d);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.tage{margin-left:auto;font-size:9px;color:var(--text3)}
+.tc-rider{font-size:15px;font-weight:700;margin-bottom:2px}
+.tc-issue{font-size:12px;color:var(--text2);margin-bottom:8px}
+.tc-note{font-size:11px;color:var(--text3);padding:7px 9px;background:var(--bg3);border-radius:7px;border-left:2px solid var(--border2);margin-bottom:9px}
+.tc-meta{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.mc{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--text2)}
+.dist-badge{display:inline-flex;align-items:center;gap:3px;background:rgba(124,131,253,.1);border:1px solid rgba(124,131,253,.2);border-radius:5px;padding:2px 8px;font-size:10px;color:var(--indigo);font-weight:700}
+.tc-acts{display:flex;gap:7px;flex-wrap:wrap}
+.abtn{flex:1;min-width:80px;padding:9px;border-radius:9px;border:none;font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:.15s}
+.abtn:active{transform:scale(.96)}
+.btn-nav{background:var(--blue-d);border:1px solid rgba(64,196,255,.2);color:var(--blue)}
+.btn-accept{background:var(--green-d);border:1px solid rgba(0,230,118,.2);color:var(--green)}
+.btn-arrived{background:rgba(124,131,253,.12);border:1px solid rgba(124,131,253,.2);color:var(--indigo)}
+.btn-complete{background:linear-gradient(135deg,var(--green),#00c853);color:#000;border:none;font-weight:800}
+.btn-call{background:var(--orange-d);border:1px solid rgba(255,171,64,.2);color:var(--orange)}
+.btn-called{background:rgba(0,230,118,.2);border:1px solid rgba(0,230,118,.4);color:var(--green)}
+.btn-porter{background:rgba(255,82,82,.15);border:1px solid rgba(255,82,82,.3);color:var(--red);font-weight:800}
+
+/* CALL REQUIRED LOCK */
+.call-lock{background:rgba(255,171,64,.08);border:1px solid rgba(255,171,64,.2);border-radius:10px;padding:10px 12px;font-size:11px;color:var(--orange);text-align:center;margin-bottom:10px}
+.call-ts{font-size:10px;color:var(--green);font-family:'Courier New',monospace;margin-top:3px}
+
+/* BOTTOM SHEET */
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:flex-end}
+.sheet-bg.open{display:flex}
+.sheet{background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-width:480px;margin:0 auto;max-height:92vh;overflow-y:auto;padding-bottom:30px}
+.sheet::-webkit-scrollbar{width:3px}
+.sheet::-webkit-scrollbar-thumb{background:var(--border2)}
+.sheet-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:12px auto 0}
+.sheet-hd{padding:16px 18px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.sheet-title{font-size:15px;font-weight:800}
+.sheet-body{padding:16px 18px}
+.sheet-section{margin-bottom:18px}
+.ss-title{font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.si{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;outline:none;transition:.2s}
+.si:focus{border-color:var(--indigo)}
+.si::placeholder{color:var(--text3)}
+.verify-box{background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;padding:14px}
+.verify-match{border-color:rgba(0,230,118,.5);background:rgba(0,230,118,.06)}
+.verify-mismatch{border-color:rgba(255,82,82,.5);background:rgba(255,82,82,.06)}
+.verify-lbl{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.verify-val{font-size:16px;font-weight:800;font-family:'Courier New',monospace}
+
+/* CHIP MULTI-SELECT */
+.chip-grid{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:7px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg3);font-size:11px;font-weight:700;cursor:pointer;transition:.15s;color:var(--text2)}
+.chip.sel{border-color:rgba(124,131,253,.5);background:rgba(124,131,253,.12);color:var(--indigo)}
+.chip.sel-orange{border-color:rgba(255,171,64,.5);background:rgba(255,171,64,.1);color:var(--orange)}
+.chip.sel-red{border-color:rgba(255,82,82,.4);background:rgba(255,82,82,.08);color:var(--red)}
+
+/* COST ROW */
+.cost-row{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:6px}
+.cost-lbl{flex:1;font-size:12px;font-weight:600}
+.cost-who{display:flex;gap:4px}
+.cost-opt{padding:4px 10px;border-radius:20px;border:1px solid var(--border);font-size:10px;font-weight:700;cursor:pointer;background:var(--bg)}
+.cost-opt.sel-co{border-color:rgba(64,196,255,.4);color:var(--blue);background:rgba(64,196,255,.08)}
+.cost-opt.sel-ri{border-color:rgba(255,171,64,.4);color:var(--orange);background:rgba(255,171,64,.08)}
+.cost-amt{width:70px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:12px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;outline:none;text-align:right}
+.cost-amt:focus{border-color:var(--indigo)}
+
+/* RESOLUTION TYPE */
+.res-type-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.res-type-btn{padding:12px 8px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg3);font-size:11px;font-weight:700;cursor:pointer;text-align:center;color:var(--text2);transition:.15s;line-height:1.3}
+.res-type-btn.sel{border-color:rgba(0,230,118,.5);background:rgba(0,230,118,.08);color:var(--green)}
+.res-type-btn.sel-orange{border-color:rgba(255,171,64,.5);background:rgba(255,171,64,.08);color:var(--orange)}
+.res-type-btn.sel-red{border-color:rgba(255,82,82,.4);background:rgba(255,82,82,.08);color:var(--red)}
+
+/* STEP INDICATOR */
+.steps{display:flex;align-items:center;gap:4px;margin-bottom:14px;padding:0 4px}
+.step{flex:1;height:3px;border-radius:2px;background:var(--border)}
+.step.done{background:var(--green)}
+.step.active{background:var(--indigo)}
+
+/* MAP */
+#techMap{width:100%;height:calc(100vh - 180px);border-radius:14px;overflow:hidden}
+.leaflet-tile{filter:brightness(.5) saturate(.3) hue-rotate(200deg)}
+.leaflet-container{background:var(--bg)}
+
+/* PROFILE */
+.profile-hd{background:linear-gradient(135deg,rgba(124,131,253,.15),rgba(64,196,255,.08));border:1px solid var(--border);border-radius:16px;padding:18px;text-align:center;margin-bottom:12px}
+.p-av{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--indigo),#5c6bc0);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;margin:0 auto 10px;box-shadow:0 8px 24px rgba(124,131,253,.3)}
+.p-name{font-size:19px;font-weight:800;margin-bottom:3px}
+.p-id{font-size:11px;color:var(--text2)}
+.info-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(30,47,71,.6)}
+.info-row:last-child{border:none}
+.ik{font-size:11px;color:var(--text2);font-weight:600}
+.iv{font-size:12px;font-weight:700}
+.logout-btn{width:100%;padding:12px;background:var(--red-d);border:1px solid rgba(255,82,82,.2);color:var(--red);border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-top:6px}
+.empty{text-align:center;padding:36px 20px;color:var(--text3)}
+.empty-ico{font-size:38px;margin-bottom:10px}
+.empty-txt{font-size:13px;font-weight:600}
+
+/* COMPLETE FORM */
+.complete-form{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:10px;display:none}
+.cf-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.cf-input{width:100%;background:var(--bg2);border:1.5px solid var(--border);border-radius:9px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;outline:none;transition:.2s;margin-bottom:10px}
+.cf-input:focus{border-color:var(--green)}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- GPS BLOCKER — shown when GPS denied -->
+<div id="gpsBlocker" style="display:none">
+  <div class="gps-icon">📍</div>
+  <div class="gps-title">Location Required</div>
+  <div class="gps-sub">
+    TriEV RSA requires your location to show tickets, calculate distances, and track your route.<br><br>
+    <b>Please allow location access</b> to continue using the app.
+  </div>
+  <button class="gps-btn" onclick="requestGPS()">📍 Allow Location Access</button>
+  <div style="margin-top:12px;font-size:11px;color:var(--text3)">Your location is only shared while you are logged in</div>
+</div>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <img src="triev_logo.png" style="height:56px;width:auto;object-fit:contain;margin-bottom:16px">
+  <div class="login-title">Technician App</div>
+  <div class="login-sub">TriEV RSA Field Operations</div>
+  <div class="lcard">
+    <label class="lbl">Mobile Number</label>
+    <input class="inp" id="loginMobile" type="tel" placeholder="Registered mobile" maxlength="10" inputmode="numeric">
+    <label class="lbl">Password</label>
+    <div style="position:relative">
+      <input class="inp" id="loginPass" type="password" placeholder="Password" style="width:100%;padding-right:48px">
+      <button type="button" id="passEye" onclick="toggleLoginPass()"
+        style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:rgba(107,140,186,.6);line-height:1;padding:0">
+        👁
+      </button>
+    </div>
+    <button class="btn-login" id="loginBtn" onclick="doLogin()">Login to RSA App</button>
+    <div id="loginError" style="margin-top:10px;padding:10px;background:rgba(255,82,82,.12);border:1px solid rgba(255,82,82,.2);border-radius:10px;font-size:12px;color:#ff5252;text-align:center;display:none"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app-screen" id="appScreen">
+  <div class="app-hd">
+    <div class="hd-av" id="hdAv">AM</div>
+    <div>
+      <div class="hd-name" id="hdName">Loading…</div>
+      <div class="hd-sub" id="hdSub">—</div>
+    </div>
+    <button class="status-btn btn-available" id="statusBtn" onclick="toggleStatus()">
+      <div class="gps-dot"></div><span id="statusLabel">Available</span>
+    </button>
+    <div class="gps-indicator" id="gpsIndicator">
+      <div class="gps-dot"></div>GPS
+    </div>
+  </div>
+
+  <!-- MY TICKETS -->
+  <div class="view on" id="v-mine">
+    <div class="stat-row">
+      <div class="stat-card"><div class="sv" style="color:var(--orange)" id="s-active">0</div><div class="sl">Active</div></div>
+      <div class="stat-card"><div class="sv" style="color:var(--green)" id="s-done">0</div><div class="sl">Today Done</div></div>
+      <div class="stat-card"><div class="sv" style="color:var(--indigo)" id="s-hours">0h</div><div class="sl">Online</div></div>
+    </div>
+    <div id="myTicketsList"></div>
+  </div>
+
+  <!-- OPEN TICKETS -->
+  <div class="view" id="v-open">
+    <div style="font-size:11px;color:var(--text2);margin-bottom:10px;font-weight:600">Open tickets sorted by distance from your location</div>
+    <div id="openTicketsList"></div>
+  </div>
+
+  <!-- MAP -->
+  <div class="view" id="v-map" style="padding:10px">
+    <div id="techMap"></div>
+  </div>
+
+  <!-- PORTER TICKETS -->
+  <div class="view" id="v-porter" style="padding:14px">
+    <div style="background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.2);border-radius:12px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:800;color:var(--red);margin-bottom:3px">🚚 Porter Requested</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.5">These tickets need a porter for vehicle pickup. RSA Manager is arranging. You'll be notified when porter is received at hub.</div>
+    </div>
+    <div id="porterTicketsList"></div>
+  </div>
+  <div class="view" id="v-profile">
+    <div class="profile-hd">
+      <div class="p-av" id="profAv">AM</div>
+      <div class="p-name" id="profName">—</div>
+      <div class="p-id" id="profId">—</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="sv" style="color:var(--orange)" id="p-active">0</div><div class="sl">Active</div></div>
+      <div class="stat-card"><div class="sv" style="color:var(--green)" id="p-total">0</div><div class="sl">All Time</div></div>
+      <div class="stat-card"><div class="sv" style="color:var(--indigo)" id="p-avg">—</div><div class="sl">Avg Min</div></div>
+    </div>
+    <div class="info-card">
+      <div class="info-row"><span class="ik">Mobile</span><span class="iv" id="p-mobile">—</span></div>
+      <div class="info-row"><span class="ik">Region</span><span class="iv" id="p-region">—</span></div>
+      <div class="info-row"><span class="ik">Today's Distance</span><span class="iv" id="p-dist">—</span></div>
+      <div class="info-row"><span class="ik">Session Start</span><span class="iv" id="p-login">—</span></div>
+      <div class="info-row"><span class="ik">Status</span><span class="iv" id="p-status" style="color:var(--green)">Available</span></div>
+    </div>
+
+    <!-- Change Password -->
+    <div class="info-card">
+      <div style="font-size:12px;font-weight:700;margin-bottom:10px">Change Password</div>
+      <input class="cf-input" id="oldPass" type="password" placeholder="Current password" style="margin-bottom:8px">
+      <input class="cf-input" id="newPass" type="password" placeholder="New password">
+      <button class="abtn btn-accept" style="width:100%;margin-top:2px" onclick="changePassword()">Update Password</button>
+    </div>
+
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bnav">
+    <button class="bn on" id="bn-mine" onclick="switchView('mine')">
+      <span class="bn-ico">🎫</span>MY TICKETS
+      <span class="bnbadge" id="bnBadge" style="display:none">0</span>
+    </button>
+    <button class="bn" id="bn-open" onclick="switchView('open')" style="position:relative">
+      <span class="bn-ico">📋</span>OPEN
+      <span class="bnbadge" id="openBadge">0</span>
+    </button>
+    <button class="bn" id="bn-porter" onclick="switchView('porter')">
+      <span class="bn-ico">🚚</span>PORTER
+      <span class="bnbadge" id="porterBadge" style="display:none;background:#ff5252">0</span>
+    </button>
+    <button class="bn" id="bn-map" onclick="switchView('map');initTechMap()">
+      <span class="bn-ico">🗺</span>MAP
+    </button>
+    <button class="bn" id="bn-profile" onclick="switchView('profile');renderProfile()">
+      <span class="bn-ico">👤</span>PROFILE
+    </button>
+  </div>
+</div>
+
+<!-- WORKFLOW BOTTOM SHEET -->
+<div class="sheet-bg" id="workflowSheet">
+  <div class="sheet" id="sheetContent">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hd">
+      <div class="sheet-title" id="sheetTitle">Ticket Workflow</div>
+      <button onclick="closeSheet()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+
+// ── STATE ────────────────────────────────
+let TECH=null, SESSION_ID=null, GPS_WATCH=null, TOKEN='';
+let techLat=null, techLng=null, techStatus='available', techInited=false;
+let ALL_TICKETS=[], SESSION_START=null, SESSION_DIST=0, SESSION_DONE=0;
+let techMap=null, mapInited=false;
+const HEADERS=()=>({'Content-Type':'application/json','Authorization':'Bearer '+TOKEN});
+
+// ── GPS ───────────────────────────────────
+function requestGPS(){
+  if(!navigator.geolocation){alert('GPS not supported');return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    techLat=pos.coords.latitude;techLng=pos.coords.longitude;
+    document.getElementById('gpsBlocker').style.display='none';
+    startGPSTracking();
+  },err=>{
+    alert('Please enable location access in browser settings, then try again.');
+  },{enableHighAccuracy:true,timeout:10000});
+}
+
+function startGPSTracking(){
+  if(GPS_WATCH) navigator.geolocation.clearWatch(GPS_WATCH);
+  GPS_WATCH=navigator.geolocation.watchPosition(pos=>{
+    techLat=pos.coords.latitude;techLng=pos.coords.longitude;
+    document.getElementById('gpsIndicator').style.opacity='1';
+    if(TECH) sendLocation(pos.coords.latitude,pos.coords.longitude,pos.coords.speed?pos.coords.speed*3.6:null);
+  },err=>{
+    document.getElementById('gpsIndicator').style.opacity='.4';
+  },{enableHighAccuracy:true,maximumAge:10000,timeout:15000});
+}
+
+async function sendLocation(lat,lng,speed=null){
+  if(!TECH||!TOKEN) return;
+  try{
+    await fetch('/update_technician_location',{method:'POST',headers:HEADERS(),body:JSON.stringify({tech_id:TECH.tech_id,latitude:lat,longitude:lng,speed_kmh:speed?Math.round(speed):null})});
+  }catch(e){}
+}
+
+// ── LOGIN ─────────────────────────────────
+async function doLogin(){
+  const mobile   = document.getElementById('loginMobile').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const btn      = document.getElementById('loginBtn');
+  const errEl    = document.getElementById('loginError');
+
+  errEl.style.display='none';
+
+  if(!mobile || mobile.length < 10){ showErr('Enter your 10-digit mobile number'); return; }
+  if(!password){ showErr('Enter your password'); return; }
+
+  btn.disabled=true;
+  btn.textContent='Logging in…';
+
+  // Try GPS silently (don't block login)
+  if(!techLat && navigator.geolocation){
+    await new Promise(resolve=>{
+      navigator.geolocation.getCurrentPosition(
+        pos=>{ techLat=pos.coords.latitude; techLng=pos.coords.longitude; resolve(); },
+        ()=>resolve(),
+        {timeout:4000, enableHighAccuracy:false}
+      );
+    });
+  }
+
+  try{
+    const res  = await fetch('/technician_login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({mobile, password, latitude:techLat||null, longitude:techLng||null})
+    });
+    const data = await res.json();
+
+    if(!res.ok){
+      const msg = data.detail || 'Login failed';
+      showErr(msg);
+      btn.disabled=false;
+      btn.textContent='Login to RSA App';
+      return;
+    }
+
+    // Success
+    TECH       = data;
+    TOKEN      = data.token;
+    SESSION_ID = data.session_id;
+    localStorage.setItem('tech_token', TOKEN);
+    localStorage.setItem('tech_data',  JSON.stringify(data));
+    localStorage.setItem('tech_mobile', mobile);
+    SESSION_START = new Date();
+
+    if(!techLat){
+      // GPS not available yet — show blocker after login
+      showApp();
+      document.getElementById('gpsBlocker').style.display='flex';
+    } else {
+      showApp();
+      startGPSTracking();
+    }
+
+  } catch(e){
+    showErr('Cannot reach server. Check your connection.');
+    btn.disabled=false;
+    btn.textContent='Login to RSA App';
+  }
+}
+
+function showErr(msg){
+  const el=document.getElementById('loginError');
+  el.textContent='⚠ '+msg;
+  el.style.display='block';
+}
+
+function toggleLoginPass(){
+  const inp=document.getElementById('loginPass');
+  const eye=document.getElementById('passEye');
+  if(inp.type==='password'){ inp.type='text'; eye.textContent='🙈'; }
+  else { inp.type='password'; eye.textContent='👁'; }
+}
+
+function showApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appScreen').style.display='flex';
+  const ini=(TECH.name||'').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('hdAv').textContent=ini;
+  document.getElementById('hdName').textContent=TECH.name;
+  document.getElementById('hdSub').textContent=TECH.region+' · TECH-00'+TECH.tech_id;
+  document.getElementById('profAv').textContent=ini;
+  document.getElementById('profName').textContent=TECH.name;
+  document.getElementById('profId').textContent='TECH-00'+TECH.tech_id+' · '+TECH.region;
+  loadMyTickets();
+  // Ping location every 30s
+  setInterval(()=>{if(techLat)sendLocation(techLat,techLng);},30000);
+  // Refresh tickets every 60s
+  setInterval(()=>loadMyTickets(),60000);
+}
+
+// ── DATA ──────────────────────────────────
+async function loadMyTickets(){
+  if(!TECH||!TOKEN) return;
+  try{
+    const res=await fetch(`/technician/${TECH.tech_id}/tickets`,{headers:HEADERS()});
+    if(res.ok){
+      const data=await res.json();
+      ALL_TICKETS=data.tickets||[];
+    }
+  }catch(e){}
+
+  // Also load open tickets
+  try{
+    const res2=await fetch(`/tickets?status=OPEN&limit=50`,{headers:HEADERS()});
+    if(res2.ok){
+      const open=await res2.json();
+      renderMyTickets();
+      renderOpenTickets(open);
+    }
+  }catch(e){}
+  renderMyTickets();
+}
+
+function renderMyTickets(){
+  // Split: porter_pending goes to porter tab, rest stays in active
+  const activeTickets = ALL_TICKETS.filter(t=>(t.status||'').toUpperCase()!=='PORTER_PENDING');
+  const porterTickets = ALL_TICKETS.filter(t=>(t.status||'').toUpperCase()==='PORTER_PENDING');
+
+  // Stats — only count true active tickets
+  document.getElementById('s-active').textContent = activeTickets.length;
+  document.getElementById('s-done').textContent   = SESSION_DONE;
+  const h = SESSION_START ? Math.round((Date.now()-SESSION_START)/3600000*10)/10 : 0;
+  document.getElementById('s-hours').textContent  = h+'h';
+
+  // My Tickets badge (active only)
+  const badge = document.getElementById('bnBadge');
+  if(activeTickets.length>0){ badge.style.display='block'; badge.textContent=activeTickets.length; }
+  else badge.style.display='none';
+
+  // Porter badge
+  const porterBadge = document.getElementById('porterBadge');
+  if(porterTickets.length>0){ porterBadge.style.display='block'; porterBadge.textContent=porterTickets.length; }
+  else porterBadge.style.display='none';
+
+  // Render MY TICKETS (active only)
+  const el = document.getElementById('myTicketsList');
+  if(!activeTickets.length){
+    el.innerHTML=`<div class="empty"><div class="empty-ico">✅</div><div class="empty-txt">No active tickets</div></div>`;
+  } else {
+    el.innerHTML = activeTickets.map(t=>ticketCard(t,true)).join('');
+  }
+
+  // Render PORTER tab
+  const pel = document.getElementById('porterTicketsList');
+  if(pel){
+    if(!porterTickets.length){
+      pel.innerHTML=`<div class="empty"><div class="empty-ico">👍</div><div class="empty-txt">No porter requests pending</div></div>`;
+    } else {
+      pel.innerHTML = porterTickets.map(t=>`
+        <div class="tcard" style="border-left:3px solid var(--red)">
+          <div class="tcard-hd">
+            <span class="tid">${t.ticket_id}</span>
+            <span class="badge" style="background:rgba(255,82,82,.15);color:var(--red);border:1px solid rgba(255,82,82,.3)">🚚 PORTER PENDING</span>
+            <span class="tage">${timeAgo(t.assigned_at||t.time)}</span>
+          </div>
+          <div class="tc-rider">${t.rider||'—'}</div>
+          <div class="tc-issue">${t.issue||'—'}</div>
+          ${t.note?`<div class="tc-note">${t.note}</div>`:''}
+          <div class="tc-meta">
+            <span class="mc">📞 ${t.mobile||'—'}</span>
+            <span class="mc">📌 ${t.region||'—'}</span>
+          </div>
+          <div style="margin-top:8px;padding:8px 10px;background:rgba(255,171,64,.06);border:1px solid rgba(255,171,64,.15);border-radius:8px;font-size:11px;color:var(--orange)">
+            ⏳ Waiting for RSA Manager to arrange porter pickup
+          </div>
+        </div>`).join('');
+    }
+  }
+}
+
+function renderOpenTickets(tickets){
+  const el=document.getElementById('openTicketsList');
+  document.getElementById('openBadge').textContent=tickets.length;
+  if(!tickets.length){
+    el.innerHTML=`<div class="empty"><div class="empty-ico">🎉</div><div class="empty-txt">All tickets assigned!</div></div>`;
+    return;
+  }
+  const withDist=tickets.map(t=>{
+    // Normalise field names from /tickets API
+    if(!t.ticket_id && t.id)   t.ticket_id = t.id;
+    if(!t.ticket_id)           t.ticket_id = t.rsa_ticket_id || '';
+    if(t.lat&&!t.latitude)     t.latitude  = t.lat;
+    if(t.lon&&!t.longitude)    t.longitude = t.lon;
+    if(!t.rider && t.rider_name) t.rider   = t.rider_name;
+    if(!t.issue && t.issue_category) t.issue = t.issue_category;
+    if(!t.mobile && t.mobile_no)  t.mobile  = t.mobile_no;
+    return {...t, dist:t.latitude&&techLat?hdist(techLat,techLng,t.latitude,t.longitude):999};
+  }).sort((a,b)=>a.dist-b.dist);
+
+  const nearest = withDist[0];
+  const header  = techLat
+    ? `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 13px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
+        <div style="font-size:11px;color:var(--text2);flex:1">
+          <div style="font-weight:700;color:var(--text);margin-bottom:2px">📍 Sorted nearest to you</div>
+          <div style="font-size:10px">${withDist.filter(t=>t.dist<99).length} tickets with location · ${withDist.filter(t=>t.dist<5).length} within 5km</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:2px">NEAREST</div>
+          <div style="font-size:14px;font-weight:800;color:var(--green);font-family:'Courier New',monospace">${nearest.dist<99?nearest.dist+'km':'—'}</div>
+        </div>
+      </div>`
+    : `<div style="background:rgba(255,171,64,.08);border:1px solid rgba(255,171,64,.2);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--orange)">
+        ⚠ Enable GPS to see distances and sort by nearest
+      </div>`;
+
+  el.innerHTML = header + withDist.map((t,idx)=>{
+    // Add rank badge for top 3
+    const rank = idx===0?'🥇':idx===1?'🥈':idx===2?'🥉':'';
+    if(rank) t._rank = rank;
+    return ticketCard(t,false);
+  }).join('');
+}
+
+function hdist(la1,lo1,la2,lo2){const R=6371,dLat=(la2-la1)*Math.PI/180,dLon=(lo2-lo1)*Math.PI/180;const a=Math.sin(dLat/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLon/2)**2;return +(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(1);}
+function timeAgo(d){if(!d)return'—';const m=Math.round((Date.now()-new Date(d))/60000);if(m<1)return'just now';if(m<60)return m+'m';return Math.round(m/60)+'h';}
+
+function ticketCard(t,isMine){
+  // Normalise field names — two APIs return different key names
+  if(!t.ticket_id && t.id)           t.ticket_id = t.id;
+  if(!t.ticket_id && t.rsa_ticket_id)t.ticket_id = t.rsa_ticket_id;
+  if(!t.rider && t.rider_name)       t.rider     = t.rider_name;
+  if(!t.issue && t.issue_category)   t.issue     = t.issue_category;
+  if(!t.mobile && t.mobile_no)       t.mobile    = t.mobile_no;
+  if(t.lat && !t.latitude)           t.latitude  = t.lat;
+  if(t.lon && !t.longitude)          t.longitude = t.lon;
+
+  const dist=t.latitude&&techLat?hdist(techLat,techLng,t.latitude,t.longitude):null;
+  const eta=dist?Math.round(dist/0.5):null;
+  const called=CALL_LOG[t.ticket_id];
+  const arrived=ARRIVED_LOG[t.ticket_id];
+
+  // Workflow step indicator
+  const steps=['call','arrive','verify','complete'];
+  const curStep=arrived?2:called?1:0;
+
+  return `<div class="tcard ${isMine?'mine':'urgent'}" id="tcard-${t.ticket_id}">
+    <div class="tcard-hd">
+      <span class="tid">${t.ticket_id}</span>
+      <span class="badge b${(t.status||'').toLowerCase()}">${t.status||'OPEN'}</span>
+      ${!isMine&&t._rank?`<span style="font-size:14px;margin-left:2px">${t._rank}</span>`:''}
+      ${dist&&isMine?`<span class="dist-badge">📍 ${dist}km${eta?' · ~'+eta+'min':''}</span>`:''}
+      <span class="tage">${timeAgo(t.assigned_at||t.time)}</span>
+    </div>
+    <div class="tc-rider">${t.rider||'—'}</div>
+    <div class="tc-issue">${t.issue||'—'}</div>
+    ${t.note?`<div class="tc-note">${t.note}</div>`:''}
+    <div class="tc-meta">
+      <span class="mc">📞 ${t.mobile||'—'}</span>
+      <span class="mc">📌 ${t.region||'—'}</span>
+      ${t.chassis_no?`<span class="mc">🚲 ${t.chassis_no}</span>`:''}
+    </div>
+
+    ${isMine?`
+    <!-- STEP INDICATOR -->
+    <div class="steps" style="margin-bottom:10px">
+      <div class="step ${curStep>=0?'done':''}"></div>
+      <div class="step ${curStep>=1?'done':curStep===0?'active':''}"></div>
+      <div class="step ${curStep>=2?'done':curStep===1?'active':''}"></div>
+      <div class="step ${curStep>=3?'done':curStep===2?'active':''}"></div>
+    </div>
+
+    <!-- CALL STATUS (optional - records time if called) -->
+    ${called
+      ? `<div class="call-lock" style="background:rgba(0,230,118,.06);border-color:rgba(0,230,118,.2);color:var(--green)">
+          ✓ Called at <span class="call-ts">${called}</span>
+        </div>`
+      : ''
+    }
+
+    <div class="tc-acts">
+      ${t.latitude?`<button class="abtn btn-nav" onclick="navigate(${t.latitude},${t.longitude})">🗺 Navigate</button>`:''}
+      <button class="abtn ${called?'btn-called':'btn-call'}" onclick="callAndLog('${t.ticket_id}','${t.mobile||''}')">
+        ${called?'✓ Called':'📞 Call Rider'}
+      </button>
+      ${called&&!arrived?`<button class="abtn btn-arrived" onclick="openArrivedSheet('${t.ticket_id}','${t.rider||''}','${t.chassis_no||''}')">📍 Arrived</button>`:''}
+      ${arrived?`<button class="abtn btn-complete" onclick="openCompleteSheet('${t.ticket_id}','${t.rider||''}')">📋 Complete</button>`:''}
+    </div>
+    `:`
+    <!-- OPEN TICKET -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      ${dist<99
+        ? `<div style="flex:1;background:${dist<3?'rgba(0,230,118,.12)':dist<7?'rgba(124,131,253,.12)':'rgba(255,171,64,.1)'};border:1.5px solid ${dist<3?'rgba(0,230,118,.35)':dist<7?'rgba(124,131,253,.35)':'rgba(255,171,64,.3)'};border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px">
+            <div style="font-size:22px;font-weight:900;font-family:'Courier New',monospace;color:${dist<3?'var(--green)':dist<7?'var(--indigo)':'var(--orange)'};">${dist}<span style="font-size:11px;font-weight:600"> km</span></div>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:${dist<3?'var(--green)':dist<7?'var(--indigo)':'var(--orange)'}">~${eta} min away</div>
+              <div style="font-size:9px;color:var(--text3)">${dist<3?'🟢 Very close':'dist'<7?'🟡 Moderate':'🔴 Far'}</div>
+            </div>
+          </div>`
+        : `<div style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:11px;color:var(--text3)">📍 Location not available</div>`
+      }
+      ${t.latitude
+        ? `<button class="abtn btn-nav" style="flex:0;min-width:56px;padding:10px 8px" onclick="navigate(${t.latitude},${t.longitude})">🗺<br><span style="font-size:9px">MAP</span></button>`
+        : ''
+      }
+    </div>
+    <button class="abtn btn-accept" style="width:100%;padding:12px;font-size:13px" onclick="acceptTicket('${t.ticket_id}')">
+      ⚡ Accept Ticket
+    </button>`}
+  </div>`;
+}
+
+// ── CALL LOG & WORKFLOW STATE ──────────────────
+const CALL_LOG    = {};   // ticketId → timestamp string
+const ARRIVED_LOG = {};   // ticketId → true
+
+function callAndLog(ticketId, mobile){
+  const ts = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  CALL_LOG[ticketId] = ts;
+  // Log to server
+  fetch('/ticket_call_log',{method:'POST',headers:HEADERS(),body:JSON.stringify({
+    ticket_id:ticketId, tech_id:TECH.tech_id,
+    called_at:new Date().toISOString(), mobile
+  })}).catch(()=>{});
+  // Actually call
+  if(mobile) window.location.href='tel:'+mobile;
+  renderMyTickets();
+  showToast('Call logged at '+ts);
+}
+
+// ── ARRIVED SHEET ─────────────────────────────
+function openArrivedSheet(ticketId, riderName, chassisFromDB){
+  document.getElementById('sheetTitle').textContent='📍 Arrived Verification';
+  document.getElementById('sheetBody').innerHTML=`
+    <div class="sheet-section">
+      <div class="ss-title">Rider Details</div>
+      <div class="verify-box" id="chassis-verify-box">
+        <div class="verify-lbl">Chassis No (from system)</div>
+        <div class="verify-val" style="color:var(--blue)">${chassisFromDB||'Not on file'}</div>
+      </div>
+    </div>
+    <div class="sheet-section">
+      <div class="ss-title">Verify Physical Vehicle</div>
+      <div class="verify-lbl" style="margin-bottom:6px">Rider Name</div>
+      <input class="si" id="vf-rname" value="${riderName}" placeholder="Confirm rider name" style="margin-bottom:10px">
+      <div class="verify-lbl" style="margin-bottom:6px">Chassis No (physically read from vehicle)</div>
+      <input class="si" id="vf-chassis" placeholder="Type chassis no from vehicle" oninput="checkChassisMatch('${chassisFromDB||''}')">
+      <div id="chassis-match-result" style="margin-top:6px;font-size:11px;font-weight:700;text-align:center"></div>
+    </div>
+    <button onclick="confirmArrival('${ticketId}')"
+      style="width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,var(--indigo),#5c6bc0);color:#fff;border:none;font-size:14px;font-weight:800;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-top:6px">
+      ✓ Confirm Arrival
+    </button>`;
+  openSheet();
+}
+
+function checkChassisMatch(expected){
+  const typed = document.getElementById('vf-chassis').value.trim().toUpperCase();
+  const exp   = expected.trim().toUpperCase();
+  const box   = document.getElementById('chassis-verify-box');
+  const res   = document.getElementById('chassis-match-result');
+  if(!typed){ box.className='verify-box'; res.textContent=''; return; }
+  if(exp && typed === exp){
+    box.className='verify-box verify-match';
+    res.innerHTML='<span style="color:var(--green)">✓ Chassis matches!</span>';
+  } else if(exp) {
+    box.className='verify-box verify-mismatch';
+    res.innerHTML='<span style="color:var(--red)">⚠ Mismatch — double check vehicle</span>';
+  }
+}
+
+async function confirmArrival(ticketId){
+  const chassis = document.getElementById('vf-chassis').value.trim();
+  ARRIVED_LOG[ticketId] = true;
+  await fetch('/tech_arrived',{method:'POST',headers:HEADERS(),body:JSON.stringify({
+    ticket_id:ticketId, tech_id:TECH.tech_id
+  })}).catch(()=>{});
+  closeSheet();
+  renderMyTickets();
+  showToast('Arrival confirmed ✓');
+}
+
+// ── COMPLETE SHEET ────────────────────────────
+const PARTS_LIST = [
+  'Break Lever','Controller','DC Convertor','Fuse','IOT Relay','Throttle','Tyre','Other'
+];
+const ISSUES_LIST = [
+  '48V EV Out','Wiring Issue','Battery Issue (Error/Stuck)','Break (Shoe/Wire/Lever/Switch)',
+  'Controller Issue','Coupler Issue','DC Convertor','Drum Issue (Plate/Patti)','Fuse',
+  'Handle Loose','Harness Issue (Wire/Coupler)','IOT Relay Issue','Main Lock Issue',
+  'Motor Issue','No Current Output','Throttle Issue (Wire/Coupler)','Tyre Issue',
+  'Wheel Stuck (Bearing/Rim)','Other'
+];
+
+let WF = {};   // workflow state for current sheet
+
+function openCompleteSheet(ticketId, riderName){
+  WF = { ticketId, riderName, parts:{}, issues:[], resType:null, note:'', porterAmt:'' };
+  renderCompleteSheet();
+  openSheet();
+}
+
+function renderCompleteSheet(){
+  document.getElementById('sheetTitle').textContent='📋 Complete Ticket · '+WF.ticketId;
+  const sp  = WF.parts;
+  const si  = WF.issues;
+  const rt  = WF.resType;
+  const partKeys = Object.keys(sp);
+
+  const partsHtml = PARTS_LIST.map(p=>{
+    const sel = sp[p]!==undefined;
+    return `<div class="chip ${sel?'sel-orange':''}" onclick="togglePart('${p}')">${p}</div>`;
+  }).join('');
+
+  const costHtml = partKeys.length ? `
+    <div style="margin-top:10px">
+      <div class="ss-title" style="margin-bottom:6px">Part Cost & Who Pays</div>
+      ${partKeys.map(p=>`
+        <div class="cost-row">
+          <span class="cost-lbl">${p}</span>
+          <div class="cost-who">
+            <span class="cost-opt ${sp[p].payer==='company'?'sel-co':''}" onclick="setPartPayer('${p}','company')">Company</span>
+            <span class="cost-opt ${sp[p].payer==='rider'?'sel-ri':''}" onclick="setPartPayer('${p}','rider')">Rider</span>
+          </div>
+          <input class="cost-amt" type="number" placeholder="₹0" value="${sp[p].amt||''}" oninput="setPartAmt('${p}',this.value)" min="0">
+        </div>`).join('')}
+    </div>` : '';
+
+  const issuesHtml = ISSUES_LIST.map(i=>{
+    const sel = si.includes(i);
+    return `<div class="chip ${sel?'sel':''}" onclick="toggleIssue('${i}')">${i}</div>`;
+  }).join('');
+
+  const otherPartHtml = sp['Other']!==undefined ? `
+    <div class="sheet-section">
+      <div class="ss-title">Specify Other Part</div>
+      <input class="si" id="other-part-text" placeholder="Describe part…" value="${WF.otherPart||''}" oninput="WF.otherPart=this.value">
+    </div>` : '';
+
+  const otherIssueHtml = si.includes('Other') ? `
+    <input class="si" style="margin-top:8px" id="other-issue-text" placeholder="Describe the issue…" value="${WF.otherIssue||''}" oninput="WF.otherIssue=this.value">` : '';
+
+  const porterHtml = rt==='porter' ? `
+    <div style="font-size:12px;color:var(--orange);background:rgba(255,171,64,.08);border:1px solid rgba(255,171,64,.2);border-radius:10px;padding:12px;line-height:1.6;margin-bottom:4px">
+      🚚 <b>Porter will be arranged by RSA Manager.</b><br>
+      Your ticket will be closed on your side.<br>
+      The manager will update the porter amount and final status.
+    </div>` : '';
+
+  // Action button — always show after resolution type selected
+  let actionBtn = '';
+  if(rt === 'porter'){
+    actionBtn = `<button onclick="submitPorterRequest()"
+      style="width:100%;padding:14px;border-radius:12px;background:rgba(255,82,82,.15);border:1.5px solid rgba(255,82,82,.4);color:var(--red);font-size:14px;font-weight:800;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-top:4px">
+      🚚 Submit Porter Request & Close My Side
+    </button>`;
+  } else if(rt){
+    actionBtn = `<button onclick="submitComplete()"
+      style="width:100%;padding:15px;border-radius:12px;background:linear-gradient(135deg,var(--green),#00c853);color:#000;border:none;font-size:15px;font-weight:800;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-top:4px;box-shadow:0 4px 16px rgba(0,230,118,.3)">
+      ✓ Mark Resolved &amp; Close Ticket
+    </button>`;
+  } else {
+    actionBtn = `<div style="text-align:center;padding:12px;color:var(--text3);font-size:12px;background:var(--bg3);border-radius:8px;margin-top:4px">
+      👆 Select how it was resolved above
+    </div>`;
+  }
+
+  document.getElementById('sheetBody').innerHTML = `
+    <div class="sheet-section">
+      <div class="ss-title">Parts Used (optional)</div>
+      <div class="chip-grid">${partsHtml}</div>
+      ${costHtml}
+    </div>
+    ${otherPartHtml}
+    <div class="sheet-section">
+      <div class="ss-title">Actual Issue (select all that apply)</div>
+      <div class="chip-grid">${issuesHtml}</div>
+      ${otherIssueHtml}
+    </div>
+    <div class="sheet-section">
+      <div class="ss-title">Resolution Note *</div>
+      <textarea class="si" rows="3" placeholder="What was done? What was the root cause?" style="resize:none;min-height:70px" oninput="WF.note=this.value">${WF.note}</textarea>
+    </div>
+    <div class="sheet-section">
+      <div class="ss-title">Resolved How? *</div>
+      <div class="res-type-grid">
+        <div class="res-type-btn ${rt==='oncall'?'sel':''}" onclick="setResType('oncall')">📞<br>On Call</div>
+        <div class="res-type-btn ${rt==='onsite'?'sel':''}" onclick="setResType('onsite')">📍<br>On Location</div>
+        <div class="res-type-btn ${rt==='porter'?'sel-red':''}" onclick="setResType('porter')">🚚<br>Porter Required</div>
+      </div>
+    </div>
+    ${porterHtml}
+    ${actionBtn}
+    <div style="height:20px"></div>
+  `;
+}
+function togglePart(p){
+  if(WF.parts[p]!==undefined) delete WF.parts[p];
+  else WF.parts[p]={payer:'company',amt:''};
+  renderCompleteSheet();
+}
+function setPartPayer(p,payer){WF.parts[p].payer=payer;renderCompleteSheet();}
+function setPartAmt(p,amt){if(WF.parts[p])WF.parts[p].amt=amt;}
+function toggleIssue(i){
+  const idx=WF.issues.indexOf(i);
+  if(idx>=0) WF.issues.splice(idx,1); else WF.issues.push(i);
+  renderCompleteSheet();
+}
+function setResType(t){WF.resType=t;renderCompleteSheet();}
+
+async function submitComplete(){
+  if(!WF.issues.length){showToast('Select at least one actual issue','err');return;}
+  if(!WF.note.trim()){showToast('Add a resolution note','err');return;}
+
+  const partsStr = Object.entries(WF.parts).map(([p,v])=>`${p}(${v.payer},₹${v.amt||0})`).join('; ');
+  const issueStr = WF.issues.join('; ')+(WF.otherIssue?' - '+WF.otherIssue:'');
+  const fullNote = `Issues: ${issueStr}. Parts: ${partsStr||'None'}. Resolution: ${WF.note}. Type: ${WF.resType}`;
+
+  const res = await fetch('/close_ticket',{method:'POST',headers:HEADERS(),body:JSON.stringify({
+    ticket_id:WF.ticketId, resolution_note:fullNote
+  })});
+  if(res.ok){
+    SESSION_DONE++;
+    delete ARRIVED_LOG[WF.ticketId];
+    delete CALL_LOG[WF.ticketId];
+    closeSheet(); await loadMyTickets();
+    showToast('Ticket resolved ✓ Great work!');
+  } else {
+    const d=await res.json(); showToast(d.detail||'Failed','err');
+  }
+}
+
+async function submitPorterRequest(){
+  if(!WF.issues.length){showToast('Select at least one actual issue','err');return;}
+  if(!WF.note.trim()){showToast('Add a resolution note','err');return;}
+
+  const partsStr = Object.entries(WF.parts).map(([p,v])=>`${p}(${v.payer},₹${v.amt||0})`).join('; ');
+  const issueStr = WF.issues.join('; ')+(WF.otherIssue?' - '+WF.otherIssue:'');
+  const note = `PORTER REQUEST. Issues: ${issueStr}. Parts: ${partsStr||'None'}. Note: ${WF.note}`;
+
+  // Close ticket on tech side
+  const res = await fetch('/close_ticket',{method:'POST',headers:HEADERS(),body:JSON.stringify({
+    ticket_id:WF.ticketId, resolution_note:note, resolution_type:'porter_requested'
+  })});
+  if(res.ok){
+    // Notify RSA manager
+    await fetch('/create_porter_request',{method:'POST',headers:HEADERS(),body:JSON.stringify({
+      ticket_id:WF.ticketId, tech_id:TECH.tech_id,
+      issues:issueStr, note:WF.note
+    })}).catch(()=>{});
+    SESSION_DONE++;
+    delete ARRIVED_LOG[WF.ticketId];
+    delete CALL_LOG[WF.ticketId];
+    closeSheet();
+    await loadMyTickets();
+    showToast('Porter request sent ✓ RSA Manager notified');
+  } else {
+    const d=await res.json(); showToast(d.detail||'Failed','err');
+  }
+}
+
+// ── ACTIONS ───────────────────────────────
+function navigate(lat,lng){
+  window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`,'_blank');
+}
+
+async function acceptTicket(ticketId){
+  if(!ticketId || ticketId==='undefined'){
+    showToast('Invalid ticket — please refresh','err'); return;
+  }
+  try{
+    const res=await fetch('/assign_ticket',{
+      method:'POST',
+      headers:HEADERS(),
+      body:JSON.stringify({
+        ticket_id:ticketId,
+        technician_name:TECH.name,
+        tech_id:TECH.tech_id
+      })
+    });
+    if(res.ok){
+      showToast('Ticket accepted ✓');
+      await loadMyTickets();
+      switchView('mine');
+    } else {
+      const d=await res.json();
+      showToast(d.detail||'Failed to accept ticket','err');
+    }
+  }catch(e){ showToast('Server error — try again','err'); }
+}
+
+function openSheet(){ document.getElementById('workflowSheet').classList.add('open'); }
+function closeSheet(){ document.getElementById('workflowSheet').classList.remove('open'); }
+
+// ── MAP ───────────────────────────────────
+// ── MAP ───────────────────────────────────
+function initTechMap(){
+  if(mapInited) return refreshTechMap();
+  mapInited=true;
+  setTimeout(()=>{
+    const center=techLat?[techLat,techLng]:[28.56,77.20];
+    techMap=L.map('techMap').setView(center,13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(techMap);
+    refreshTechMap();
+  },200);
+}
+
+function refreshTechMap(){
+  if(!techMap) return;
+  techMap.eachLayer(l=>{if(l instanceof L.Marker||l instanceof L.Polyline)techMap.removeLayer(l);});
+
+  // My position
+  if(techLat){
+    const ini=(TECH?.name||'').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const icon=L.divIcon({className:'',iconSize:[32,32],iconAnchor:[16,16],html:`<div style="width:30px;height:30px;background:var(--indigo);border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white;box-shadow:0 0 14px rgba(124,131,253,.6)">${ini}</div>`});
+    L.marker([techLat,techLng],{icon}).addTo(techMap).bindPopup('<b>📍 You are here</b>').openPopup();
+  }
+
+  // My assigned tickets
+  ALL_TICKETS.forEach(t=>{
+    if(!t.lat&&!t.latitude) return;
+    const lat=t.lat||t.latitude,lng=t.lon||t.longitude;
+    const icon=L.divIcon({className:'',iconSize:[26,26],iconAnchor:[13,13],html:`<div style="width:24px;height:24px;background:var(--orange);border-radius:50%;border:2px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:white;box-shadow:0 2px 8px rgba(0,0,0,.4)">→</div>`});
+    L.marker([lat,lng],{icon}).addTo(techMap).bindPopup(`<div style="font-size:12px"><b>${t.ticket_id}</b><br>${t.rider}<br>${t.issue}</div>`);
+    if(techLat) L.polyline([[techLat,techLng],[lat,lng]],{color:'rgba(255,171,64,.4)',weight:2,dashArray:'5 5'}).addTo(techMap);
+  });
+}
+
+// ── PROFILE ───────────────────────────────
+function renderProfile(){
+  if(!TECH) return;
+  document.getElementById('p-mobile').textContent=TECH.mobile||localStorage.getItem('tech_mobile')||'—';
+  document.getElementById('p-region').textContent=TECH.region;
+  document.getElementById('p-active').textContent=ALL_TICKETS.length;
+  document.getElementById('p-total').textContent=TECH.total_resolved||SESSION_DONE;
+  document.getElementById('p-avg').textContent=TECH.avg_resolution_min?TECH.avg_resolution_min+'m':'—';
+  document.getElementById('p-dist').textContent=SESSION_DIST>0?SESSION_DIST.toFixed(1)+'km':'—';
+  document.getElementById('p-login').textContent=SESSION_START?SESSION_START.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false}):'—';
+  document.getElementById('p-status').textContent=techStatus.charAt(0).toUpperCase()+techStatus.slice(1);
+}
+
+// ── STATUS TOGGLE ─────────────────────────
+async function toggleStatus(){
+  techStatus=techStatus==='available'?'busy':'available';
+  const btn=document.getElementById('statusBtn');
+  const lbl=document.getElementById('statusLabel');
+  btn.className='status-btn '+(techStatus==='available'?'btn-available':'btn-busy');
+  lbl.textContent=techStatus==='available'?'Available':'Busy';
+  if(TECH) await fetch('/update_technician_status',{method:'POST',headers:HEADERS(),body:JSON.stringify({tech_id:TECH.tech_id,status:techStatus})}).catch(()=>{});
+}
+
+// ── PASSWORD ──────────────────────────────
+async function changePassword(){
+  const old=document.getElementById('oldPass').value;
+  const nw=document.getElementById('newPass').value;
+  if(!old||!nw){showToast('Enter both passwords','err');return;}
+  if(nw.length<4){showToast('Password too short','err');return;}
+  try{
+    const res=await fetch('/change_my_password',{method:'POST',headers:HEADERS(),body:JSON.stringify({current_password:old,new_password:nw})});
+    if(res.ok){showToast('Password updated ✓');document.getElementById('oldPass').value='';document.getElementById('newPass').value='';}
+    else{const d=await res.json();showToast(d.detail||'Failed','err');}
+  }catch(e){showToast('Error','err');}
+}
+
+// ── LOGOUT ────────────────────────────────
+async function logout(){
+  if(!confirm('Logout? Your location will stop being shared.')) return;
+  if(GPS_WATCH) navigator.geolocation.clearWatch(GPS_WATCH);
+  if(TECH){
+    await fetch('/technician_logout',{method:'POST',headers:HEADERS(),body:JSON.stringify({tech_id:TECH.tech_id})}).catch(()=>{});
+    await fetch('/update_technician_status',{method:'POST',headers:HEADERS(),body:JSON.stringify({tech_id:TECH.tech_id,status:'offline'})}).catch(()=>{});
+  }
+  TECH=null;TOKEN='';SESSION_ID=null;
+  localStorage.removeItem('tech_token');localStorage.removeItem('tech_data');
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  switchView('mine');techLat=null;techLng=null;ALL_TICKETS=[];SESSION_DONE=0;
+}
+
+// ── UI HELPERS ────────────────────────────
+function switchView(v){
+  ['mine','open','porter','map','profile'].forEach(x=>{
+    document.getElementById('v-'+x).classList.toggle('on',x===v);
+    document.getElementById('bn-'+x).classList.toggle('on',x===v);
+  });
+}
+
+function showToast(msg,type='ok'){
+  let el=document.getElementById('toast');
+  if(!el){el=document.createElement('div');el.id='toast';el.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 18px;border-radius:30px;font-size:13px;font-weight:700;z-index:9999;transition:opacity .3s;max-width:90%;text-align:center;font-family:"Plus Jakarta Sans",sans-serif';document.body.appendChild(el);}
+  el.textContent=msg;
+  el.style.background=type==='err'?'rgba(255,82,82,.9)':'rgba(0,230,118,.9)';
+  el.style.color=type==='err'?'#fff':'#000';
+  el.style.opacity='1';
+  clearTimeout(el._t);el._t=setTimeout(()=>{el.style.opacity='0';},3000);
+}
+
+// ── AUTO-LOGIN ────────────────────────────
+(async function checkSession(){
+  const saved = localStorage.getItem('tech_data');
+  const tk    = localStorage.getItem('tech_token');
+  if(!saved || !tk) return;  // No saved session — show login normally
+
+  try{
+    TECH  = JSON.parse(saved);
+    TOKEN = tk;
+
+    // Verify token is still valid by hitting a quick endpoint
+    const res = await fetch(`/technician/${TECH.tech_id}/tickets`,{
+      headers:{'Authorization':'Bearer '+TOKEN}
+    });
+
+    if(!res.ok){
+      // Token expired or invalid — clear and show login
+      localStorage.removeItem('tech_token');
+      localStorage.removeItem('tech_data');
+      return;
+    }
+
+    // Token valid — restore session
+    SESSION_START = new Date();
+    document.getElementById('loginScreen').style.display='none';
+
+    // Try GPS silently
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(
+        pos=>{ techLat=pos.coords.latitude; techLng=pos.coords.longitude; showApp(); startGPSTracking(); },
+        ()=>{ showApp(); },  // GPS denied — show app anyway, GPS blocker shown inside
+        {timeout:5000}
+      );
+    } else {
+      showApp();
+    }
+  } catch(e){
+    localStorage.removeItem('tech_token');
+    localStorage.removeItem('tech_data');
+  }
+})();
+</script>
+</body>
+</html>

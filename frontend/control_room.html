@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>triEV RSA — Control Room</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060b14;--bg2:#0d1420;--bg3:#111a2b;--bg4:#162035;
+  --border:#1e2d45;--border2:#243550;
+  --text:#e8f0fe;--text2:#7a9cc4;--text3:#3d5a7a;
+  --green:#00e676;--orange:#ff9800;--red:#ff4444;--blue:#4fc3f7;--purple:#ce93d8;--cyan:#00e5ff;--amber:#ffab40;
+  --green-d:rgba(0,230,118,.1);--orange-d:rgba(255,152,0,.1);--red-d:rgba(255,68,68,.1);--blue-d:rgba(79,195,247,.08);
+  font-family:'Sora',sans-serif;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
+.shell{display:grid;grid-template-columns:200px 1fr;grid-template-rows:50px 1fr;height:100vh}
+.topbar{grid-column:1/-1;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:10px;z-index:50}
+.brand{display:flex;align-items:center;gap:8px;margin-right:auto}
+.brand-sub{font-size:10px;color:var(--text2);margin-top:1px}
+.live-badge{display:flex;align-items:center;gap:5px;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;color:var(--green);font-family:'IBM Plex Mono',monospace}
+.pulse{width:5px;height:5px;background:var(--green);border-radius:50%;animation:pu 1.6s infinite}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.3}}
+.clock{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text2)}
+.tbtn{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);padding:5px 12px;border-radius:7px;cursor:pointer;font-size:11px;font-family:'Sora',sans-serif;font-weight:500;transition:.15s}
+.tbtn:hover{color:var(--text);border-color:var(--text2)}
+.tbtn.pri{background:rgba(255,152,0,.15);border-color:rgba(255,152,0,.3);color:var(--orange)}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.ns{padding:10px 10px 3px;font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:7px;cursor:pointer;color:var(--text2);font-size:11px;font-weight:500;margin:1px 7px;border:1px solid transparent;transition:.15s}
+.ni:hover{background:var(--bg3);color:var(--text)}
+.ni.on{background:rgba(255,152,0,.1);border-color:rgba(255,152,0,.2);color:var(--orange)}
+.ni-ic{font-size:13px;width:16px;text-align:center;flex-shrink:0}
+.nc{margin-left:auto;background:var(--red);color:#fff;border-radius:8px;font-size:9px;padding:1px 5px;font-family:'IBM Plex Mono',monospace;font-weight:700}
+.nc.orange{background:var(--orange)}
+.nc.green{background:var(--green);color:#000}
+
+/* STATS BAR */
+.stats-bar{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--border);flex-shrink:0}
+.stat{padding:10px 14px;border-right:1px solid var(--border);cursor:pointer;transition:.15s;position:relative;overflow:hidden}
+.stat:last-child{border:none}
+.stat:hover{background:rgba(255,255,255,.02)}
+.stat-lbl{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.8px;text-transform:uppercase}
+.stat-val{font-size:24px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1;margin:3px 0 2px}
+.stat-hint{font-size:10px;color:var(--text3)}
+.stat-bar{position:absolute;bottom:0;left:0;right:0;height:2px;opacity:.6}
+
+/* WORKSPACE */
+.workspace{flex:1;min-height:0;display:grid;grid-template-columns:1fr 360px;overflow:hidden}
+.map-wrap{position:relative;overflow:hidden}
+#crMap{width:100%;height:100%;min-height:500px}
+.map-ov{position:absolute;top:10px;left:10px;z-index:500;display:flex;flex-direction:column;gap:6px}
+.map-card{background:rgba(6,11,20,.9);backdrop-filter:blur(8px);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:11px}
+.mfbtn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:3px 9px;border-radius:20px;font-size:10px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:600;transition:.15s}
+.mfbtn.on{background:rgba(255,152,0,.15);border-color:rgba(255,152,0,.3);color:var(--orange)}
+
+/* RIGHT PANEL */
+.rpanel{background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.rph{padding:10px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;flex-shrink:0}
+.rph-title{font-size:12px;font-weight:700}
+.frow{padding:7px 10px;border-bottom:1px solid var(--border);display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0}
+.fsel{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:4px 7px;font-size:10px;font-family:'Sora',sans-serif;outline:none;cursor:pointer}
+.fsel:focus{border-color:var(--orange);color:var(--text)}
+.tlist{overflow-y:auto;flex:1}
+.tlist::-webkit-scrollbar{width:3px}
+.tlist::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* TICKET CARDS */
+.tcard{padding:11px 13px;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s;position:relative}
+.tcard:hover{background:rgba(255,255,255,.02)}
+.tcard.sel{background:rgba(255,152,0,.05);border-left:3px solid var(--orange)}
+.tc-top{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.tid{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--blue);font-weight:600}
+.badge{display:inline-flex;align-items:center;padding:1px 6px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:.3px}
+.bopen{background:var(--red-d);color:var(--red);border:1px solid rgba(255,68,68,.2)}
+.bassigned{background:var(--orange-d);color:var(--orange);border:1px solid rgba(255,152,0,.2)}
+.bclosed{background:var(--green-d);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.tc-rider{font-size:13px;font-weight:700;margin-bottom:2px}
+.tc-issue{font-size:11px;color:var(--text2);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tc-meta{display:flex;gap:7px;font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;flex-wrap:wrap}
+.tc-tag{background:var(--bg3);border-radius:4px;padding:1px 5px}
+.tc-tech{font-size:10px;color:var(--orange);margin-top:3px;font-weight:600}
+
+/* TIMER BADGE */
+.timer-badge{display:inline-flex;align-items:center;gap:3px;border-radius:20px;padding:1px 7px;font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.t0{background:rgba(0,230,118,.12);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.t1{background:rgba(79,195,247,.1);color:var(--blue);border:1px solid rgba(79,195,247,.2)}
+.t2{background:rgba(255,171,64,.12);color:var(--amber);border:1px solid rgba(255,171,64,.2)}
+.t3{background:rgba(255,152,0,.15);color:var(--orange);border:1px solid rgba(255,152,0,.25)}
+.t4{background:rgba(255,68,68,.12);color:var(--red);border:1px solid rgba(255,68,68,.2)}
+
+/* DETAIL DRAWER */
+.drawer{background:var(--bg);border-top:1px solid var(--border);padding:13px;flex-shrink:0;max-height:42%;overflow-y:auto;display:none}
+.drawer::-webkit-scrollbar{width:3px}
+.drawer::-webkit-scrollbar-thumb{background:var(--border2)}
+.dr-hd{display:flex;align-items:center;gap:7px;margin-bottom:11px}
+.dr-id{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:var(--blue)}
+.dr-row{display:grid;grid-template-columns:88px 1fr;align-items:start;padding:4px 0;border-bottom:1px solid rgba(30,45,69,.6)}
+.dr-row:last-child{border:none}
+.dr-k{font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding-top:2px}
+.dr-v{font-size:11px;font-weight:500}
+
+/* ASSIGN SECTION */
+.assign-wrap{margin-top:10px;display:flex;flex-direction:column;gap:7px}
+.asel{background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:7px 10px;font-size:11px;font-family:'Sora',sans-serif;outline:none;width:100%}
+.asel:focus{border-color:var(--orange)}
+.abtn-row{display:flex;gap:6px}
+.abtn{padding:7px 13px;border-radius:7px;border:none;cursor:pointer;font-size:11px;font-family:'Sora',sans-serif;font-weight:700;transition:.15s}
+.abtn-assign{background:rgba(255,152,0,.2);color:var(--orange);border:1px solid rgba(255,152,0,.3)}
+.abtn-assign:hover{background:rgba(255,152,0,.3)}
+.abtn-reassign{background:rgba(255,171,64,.15);color:var(--amber);border:1px solid rgba(255,171,64,.25)}
+.abtn-close{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.abtn-close:hover{background:rgba(0,230,118,.25)}
+.nearest-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.nc-chip{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:10px;font-family:'IBM Plex Mono',monospace;cursor:pointer;transition:.15s;white-space:nowrap}
+.nc-chip:hover{border-color:var(--orange);color:var(--orange)}
+.nc-chip.best{border-color:rgba(0,230,118,.3);color:var(--green)}
+
+/* TIMER SUMMARY */
+.timer-summary{padding:8px 13px;border-bottom:1px solid var(--border);display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0}
+.ts-chip{display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-size:10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-weight:600;transition:.15s}
+.ts-chip.on{border-color:rgba(255,152,0,.4);background:rgba(255,152,0,.08)}
+.ts-chip:hover{border-color:var(--text2)}
+
+/* TECH STATUS CONTROL */
+.tech-status-row{display:flex;gap:5px;flex-wrap:wrap}
+.ts-btn{border:none;border-radius:5px;padding:2px 8px;font-size:9px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s}
+.ts-available{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.ts-busy{background:rgba(255,152,0,.12);color:var(--orange);border:1px solid rgba(255,152,0,.2)}
+.ts-leave{background:rgba(255,68,68,.1);color:var(--red);border:1px solid rgba(255,68,68,.15)}
+
+/* TOASTS */
+.toasts{position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;gap:5px;z-index:9999;pointer-events:none}
+.toast{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px 14px;min-width:220px;font-size:11px;animation:tin .3s ease;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+.toast-assigned{border-left:3px solid var(--orange)}
+.toast-closed{border-left:3px solid var(--green)}
+.toast-info{border-left:3px solid var(--blue)}
+.toast-err{border-left:3px solid var(--red)}
+@keyframes tin{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast-t{font-weight:700;margin-bottom:2px}
+.toast-s{color:var(--text2);font-size:10px}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:20px;width:100%;max-width:500px}
+.mhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.mhd-title{font-size:13px;font-weight:700}
+.mx{background:none;border:none;color:var(--text2);font-size:17px;cursor:pointer}
+.minp{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--text);font-family:'Sora',sans-serif;outline:none;margin-bottom:10px}
+.minp:focus{border-color:var(--orange)}
+
+/* Leaflet */
+.custom-pin{display:flex;flex-direction:column;align-items:center;cursor:pointer}
+.pin-c{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:2px solid rgba(255,255,255,.3);box-shadow:0 3px 10px rgba(0,0,0,.5);font-family:'IBM Plex Mono',monospace}
+.pin-tail{width:2px;height:8px;background:rgba(255,255,255,.4)}
+.pin-lbl{background:rgba(6,11,20,.92);color:#e8f0fe;font-size:9px;padding:2px 5px;border-radius:3px;border:1px solid rgba(30,45,69,.8);white-space:nowrap;margin-top:1px;font-family:'IBM Plex Mono',monospace}
+.leaflet-tile{filter:brightness(.52) saturate(.35) hue-rotate(195deg)}
+.leaflet-container{background:#060b14}
+.sidebar-footer{margin-top:auto;padding:10px;border-top:1px solid var(--border);font-size:9px;color:var(--text3)}
+</style>
+</head>
+<body>
+<div class="toasts" id="toasts"></div>
+
+<!-- REASSIGN MODAL -->
+<div class="modal-bg" id="reassignModal">
+  <div class="modal">
+    <div class="mhd"><div class="mhd-title">Reassign Ticket</div><button class="mx" onclick="closeModal()">×</button></div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:12px" id="reas-info"></div>
+    <label style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:5px">Reason</label>
+    <input class="minp" id="reas-reason" placeholder="e.g. Tech unavailable, vehicle breakdown…">
+    <label style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:5px">New Technician</label>
+    <select class="minp" id="reas-tech" style="cursor:pointer"></select>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <button class="abtn" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border)" onclick="closeModal()">Cancel</button>
+      <button class="abtn abtn-reassign" onclick="doReassign()">Reassign</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">
+      <img src="triev_logo.png" style="height:28px;width:auto;object-fit:contain">
+      <div><div class="brand-sub">Control Room v2.0</div></div>
+    </div>
+    <div class="live-badge"><div class="pulse"></div>LIVE DISPATCH</div>
+    <div class="clock" id="clock">--:--:--</div>
+    <button class="tbtn" onclick="loadAll()">↻ Sync</button>
+    <button class="tbtn pri" onclick="window.open('/ticket','_blank')">+ New Ticket</button>
+    <button class="tbtn" onclick="window.open('/admin','_blank')">Admin →</button>
+    <div style="font-size:10px;color:var(--text3);margin-left:4px;font-family:'IBM Plex Mono',monospace" id="syncLbl"></div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--text2)" id="cr-username"></div>
+      <button onclick="crLogout()" style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.2);color:#f87171;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">🚪 Logout</button>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div style="padding:4px"></div>
+    <div class="ns">Dispatch</div>
+    <div class="ni on" id="si-map"><span class="ni-ic">🗺</span>Live Map<span class="nc" id="nc-open">0</span></div>
+    <div class="ni" onclick="setStatusFilter('OPEN')"><span class="ni-ic">🔴</span>Open<span class="nc" id="nc-open2">0</span></div>
+    <div class="ni" onclick="setStatusFilter('ASSIGNED')"><span class="ni-ic">🟡</span>Assigned<span class="nc orange" id="nc-asgn">0</span></div>
+    <div class="ni" onclick="setStatusFilter('CLOSED')"><span class="ni-ic">🟢</span>Closed Today</div>
+    <div class="ni" onclick="setStatusFilter('PORTER_PENDING')" id="si-porter"><span class="ni-ic">🚚</span>Porter Requests<span class="nc" id="nc-porter" style="background:var(--red)">0</span></div>
+    <div class="ni" onclick="clearFilters()"><span class="ni-ic">📋</span>All Tickets</div>
+    <div class="ns">Technicians</div>
+    <div class="ni" onclick="showTechPanel()"><span class="ni-ic">🔧</span>Tech Status<span class="nc green" id="nc-tech">0</span></div>
+    <div class="ns">Reports</div>
+    <div class="ni" onclick="window.open('/admin#reports','_blank')"><span class="ni-ic">📊</span>Analytics</div>
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px"><div class="pulse" style="width:5px;height:5px;background:var(--green)"></div>System Online</div>
+      <div>Auto-refresh every 5s</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" style="display:flex;flex-direction:column;overflow:hidden;height:100%;min-height:0">
+    <!-- STATS -->
+    <div class="stats-bar">
+      <div class="stat" onclick="setStatusFilter('OPEN')">
+        <div class="stat-lbl">Open</div>
+        <div class="stat-val" style="color:var(--red)" id="s-open">—</div>
+        <div class="stat-hint">Needs dispatch</div>
+        <div class="stat-bar" style="background:var(--red)"></div>
+      </div>
+      <div class="stat" onclick="setStatusFilter('ASSIGNED')">
+        <div class="stat-lbl">Assigned</div>
+        <div class="stat-val" style="color:var(--orange)" id="s-asgn">—</div>
+        <div class="stat-hint">In progress</div>
+        <div class="stat-bar" style="background:var(--orange)"></div>
+      </div>
+      <div class="stat">
+        <div class="stat-lbl">Closed Today</div>
+        <div class="stat-val" style="color:var(--green)" id="s-closed">—</div>
+        <div class="stat-hint">Resolved</div>
+        <div class="stat-bar" style="background:var(--green)"></div>
+      </div>
+      <div class="stat">
+        <div class="stat-lbl">Techs Available</div>
+        <div class="stat-val" style="color:var(--blue)" id="s-avail">—</div>
+        <div class="stat-hint">Ready now</div>
+        <div class="stat-bar" style="background:var(--blue)"></div>
+      </div>
+      <div class="stat">
+        <div class="stat-lbl">Avg ETA</div>
+        <div class="stat-val" style="color:var(--purple)" id="s-eta">—</div>
+        <div class="stat-hint">Minutes to arrive</div>
+        <div class="stat-bar" style="background:var(--purple)"></div>
+      </div>
+      <div class="stat">
+        <div class="stat-lbl">🚚 Porter Pending</div>
+        <div class="stat-val" style="color:var(--red)" id="s-stale">0</div>
+        <div class="stat-hint">Awaiting pickup</div>
+        <div class="stat-bar" style="background:var(--red)"></div>
+      </div>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div class="workspace" style="flex:1;overflow:hidden;min-height:0">
+      <!-- MAP -->
+      <div class="map-wrap">
+        <div id="crMap"></div>
+        <div class="map-ov">
+          <div class="map-card">
+            <div style="font-size:9px;color:var(--text2);margin-bottom:5px;font-weight:700;letter-spacing:.5px">MAP LAYERS</div>
+            <div style="display:flex;gap:4px">
+              <button class="mfbtn on" id="ml-open"     onclick="toggleML('open')"    >🔴 Open</button>
+              <button class="mfbtn on" id="ml-assigned" onclick="toggleML('assigned')">🟡 Assigned</button>
+              <button class="mfbtn on" id="ml-tech"     onclick="toggleML('tech')"    >🔵 Techs</button>
+            </div>
+          </div>
+          <div class="map-card" id="mapTimerInfo" style="font-size:10px;color:var(--text2)">
+            🔴 Open ticket = click to assign
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="rpanel">
+        <div class="rph">
+          <div class="rph-title" id="rph-title">Active Tickets</div>
+          <div style="margin-left:auto;font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace" id="tkCntLbl">0</div>
+        </div>
+
+        <!-- Timer Filter -->
+        <div class="timer-summary" id="timerFilterRow">
+          <div style="font-size:9px;color:var(--text3);font-weight:700;width:100%;margin-bottom:2px">⏱ OPEN SINCE</div>
+          <div class="ts-chip" id="tf-all" onclick="setTimerFilter('all')">All <span id="tc-all" style="color:var(--text)">0</span></div>
+          <div class="ts-chip" id="tf-0" onclick="setTimerFilter('0-1')">0–1h <span id="tc-0" style="color:var(--green)">0</span></div>
+          <div class="ts-chip" id="tf-1" onclick="setTimerFilter('1-2')">1–2h <span id="tc-1" style="color:var(--blue)">0</span></div>
+          <div class="ts-chip" id="tf-2" onclick="setTimerFilter('2-3')">2–3h <span id="tc-2" style="color:var(--amber)">0</span></div>
+          <div class="ts-chip" id="tf-3" onclick="setTimerFilter('3-5')">3–5h <span id="tc-3" style="color:var(--orange)">0</span></div>
+          <div class="ts-chip" id="tf-4" onclick="setTimerFilter('5+')">5h+ <span id="tc-4" style="color:var(--red)">0</span></div>
+        </div>
+
+        <!-- Filters -->
+        <div class="frow">
+          <select class="fsel" id="fStatus" onchange="renderList()"><option value="">All Status</option><option>OPEN</option><option>ASSIGNED</option><option>CLOSED</option><option value="PORTER_PENDING">🚚 Porter</option></select>
+          <select class="fsel" id="fRegion" onchange="renderList()"><option value="">All Regions</option><option>Gurgaon</option><option>West Delhi</option><option>South Delhi</option><option>North Delhi</option><option>East Delhi</option><option>Noida</option><option>Ghaziabad</option></select>
+          <select class="fsel" id="fIssue" onchange="renderList()"><option value="">All Issues</option><option>Battery Issue</option><option>On Off Issue</option><option>Tyre</option><option>Throttle Issue</option><option>Harness Issue</option><option>Wheel Stuck</option><option>Parking Issue</option><option>Other</option></select>
+          <button class="tbtn" style="font-size:10px;padding:3px 8px" onclick="clearFilters()">Clear</button>
+        </div>
+
+        <div class="tlist" id="tktList"></div>
+        <div class="drawer" id="drawer"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const REQUIRED_MODULE = 'control_room';
+
+// ══════════════════════════════════════════════════════
+// AUTH GUARD — runs before anything else
+// ══════════════════════════════════════════════════════
+(async function authGuard(){
+  const token = localStorage.getItem('token');
+  if(!token){
+    window.location.replace('/login?next='+encodeURIComponent(window.location.pathname));
+    return;
+  }
+  try{
+    const res = await fetch('/api/me',{
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}
+    });
+    if(res.status===401||res.status===403){
+      ['token','user_name','user_role','user_id','user_email','user_modules'].forEach(k=>localStorage.removeItem(k));
+      window.location.replace('/login?next='+encodeURIComponent(window.location.pathname));
+      return;
+    }
+    if(!res.ok){ console.warn('Auth check error:', res.status); return; }
+    const user = await res.json();
+    if(typeof REQUIRED_MODULE!=='undefined' && REQUIRED_MODULE){
+      const mods=user.modules||[];
+      const role=user.role||'';
+      if(!['super_admin','admin','founder'].includes(role)&&!mods.includes(REQUIRED_MODULE)){
+        document.body.innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0e1a;font-family:sans-serif"><div style="text-align:center;color:#fff;padding:40px"><div style="font-size:48px;margin-bottom:16px">🔒</div><div style="font-size:22px;font-weight:800;margin-bottom:8px">Access Denied</div><div style="font-size:14px;color:rgba(255,255,255,.5);margin-bottom:24px">You don\'t have permission to access this page.<br>Contact your admin to request access.</div><a href="/login" style="background:#7c83fd;border:none;color:#fff;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none">← Back to Login</a></div></div>';
+        return;
+      }
+    }
+    localStorage.setItem('user_name',  user.name);
+    localStorage.setItem('user_role',  user.role);
+    localStorage.setItem('user_email', user.email||'');
+    localStorage.setItem('user_id',    user.user_id);
+  }catch(e){ console.warn('Auth guard offline mode:',e); }
+})();
+
+const TOKEN   = localStorage.getItem('token')||'';
+const CR_NAME = localStorage.getItem('user_name')||'';
+const CR_ROLE = localStorage.getItem('user_role')||'';
+(function(){ const el=document.getElementById('cr-username'); if(el&&CR_NAME) el.textContent=CR_NAME+' · '+(CR_ROLE||'').replace(/_/g,' '); })();
+function crLogout(){
+  if(!confirm('Logout?')) return;
+  ['token','user_name','user_role','user_id','user_email'].forEach(k=>localStorage.removeItem(k));
+  window.location.href='/login';
+}
+const HEADERS = {'Content-Type':'application/json','Authorization':'Bearer '+TOKEN};
+
+let TICKETS=[], TECHS=[], selectedId=null, reassignTicketId=null;
+let timerFilter='all', mapLayers={open:true,assigned:true,tech:true};
+let crMap=null, mapInited=false, mapMarkers={};
+let techPanelMode=false;
+
+// ── CLOCK ─────────────────────────────────
+function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-IN',{hour12:false});}
+tick();setInterval(tick,1000);
+
+// ── API ───────────────────────────────────
+async function api(url,opts={}){
+  try{const r=await fetch(url,{headers:HEADERS,...opts});return r.ok?await r.json():null;}catch{return null;}
+}
+
+async function loadAll(){
+  const [tRes,techRes]=await Promise.all([
+    api('/tickets?limit=500'),
+    api('/technicians'),
+  ]);
+  if(tRes)    TICKETS=tRes;
+  if(techRes) TECHS=techRes;
+  updateStats();
+  renderList();
+  renderMapMarkers();
+  updateTimerCounts();
+  document.getElementById('syncLbl').textContent='Synced '+new Date().toLocaleTimeString('en-IN',{hour12:false});
+  document.getElementById('nc-tech').textContent=TECHS.filter(t=>t.status==='available').length;
+}
+
+// ── UTILS ─────────────────────────────────
+function hdist(la1,lo1,la2,lo2){const R=6371,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180;const a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;return+(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(1);}
+
+function minsOpen(t){
+  const d=new Date(t.ticket_time||t.ticket_datetime||0);
+  return Math.round((Date.now()-d)/60000);
+}
+
+function timerClass(mins){
+  if(mins<60)  return 't0';
+  if(mins<120) return 't1';
+  if(mins<180) return 't2';
+  if(mins<300) return 't3';
+  return 't4';
+}
+
+function fmtAge(mins){
+  if(mins<60)  return mins+'m';
+  if(mins<1440)return Math.floor(mins/60)+'h '+(mins%60)+'m';
+  return Math.floor(mins/1440)+'d';
+}
+
+function fmtTs(iso){
+  if(!iso)return'—';
+  const d=new Date(iso);
+  return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false});
+}
+
+function toast(title,sub,type='info'){
+  const el=document.createElement('div');
+  el.className=`toast toast-${type}`;
+  el.innerHTML=`<div class="toast-t">${title}</div>${sub?`<div class="toast-s">${sub}</div>`:''}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),300)},3500);
+}
+
+function openModal(){document.getElementById('reassignModal').classList.add('open');}
+function closeModal(){document.getElementById('reassignModal').classList.remove('open');}
+
+// ── STATS ─────────────────────────────────
+function updateStats(){
+  const today=new Date().toDateString();
+  const open  =TICKETS.filter(t=>t.status==='OPEN').length;
+  const asgn  =TICKETS.filter(t=>t.status==='ASSIGNED').length;
+  const closed=TICKETS.filter(t=>t.status==='CLOSED'&&new Date(t.closed_at||t.ticket_time||0).toDateString()===today).length;
+  const avail =TECHS.filter(t=>t.status==='available').length;
+  const etaVals=TICKETS.filter(t=>t.eta_min>0).map(t=>t.eta_min);
+  const avgEta=etaVals.length?Math.round(etaVals.reduce((a,b)=>a+b,0)/etaVals.length):null;
+  // Porter pending = only tickets with status PORTER_PENDING (live count)
+  const porter=TICKETS.filter(t=>t.status==='PORTER_PENDING').length;
+
+  document.getElementById('s-open').textContent  =open;
+  document.getElementById('s-asgn').textContent  =asgn;
+  document.getElementById('s-closed').textContent=closed;
+  document.getElementById('s-avail').textContent =avail;
+  document.getElementById('s-eta').textContent   =avgEta?avgEta+'m':'—';
+  document.getElementById('s-stale').textContent =porter;
+  document.getElementById('nc-open').textContent =open;
+  document.getElementById('nc-open2').textContent=open;
+  document.getElementById('nc-asgn').textContent =asgn;
+
+  // Porter sidebar badge
+  const ncPorter=document.getElementById('nc-porter');
+  if(ncPorter) ncPorter.textContent=porter;
+}
+
+// ── TIMER FILTER ──────────────────────────
+function updateTimerCounts(){
+  const open=TICKETS.filter(t=>t.status!=='CLOSED');
+  const buckets={
+    'all':open.length,
+    '0-1':open.filter(t=>minsOpen(t)<60).length,
+    '1-2':open.filter(t=>minsOpen(t)>=60&&minsOpen(t)<120).length,
+    '2-3':open.filter(t=>minsOpen(t)>=120&&minsOpen(t)<180).length,
+    '3-5':open.filter(t=>minsOpen(t)>=180&&minsOpen(t)<300).length,
+    '5+' :open.filter(t=>minsOpen(t)>=300).length,
+  };
+  document.getElementById('tc-all').textContent=buckets['all'];
+  document.getElementById('tc-0').textContent  =buckets['0-1'];
+  document.getElementById('tc-1').textContent  =buckets['1-2'];
+  document.getElementById('tc-2').textContent  =buckets['2-3'];
+  document.getElementById('tc-3').textContent  =buckets['3-5'];
+  document.getElementById('tc-4').textContent  =buckets['5+'];
+}
+
+function setTimerFilter(v){
+  timerFilter=v;
+  document.querySelectorAll('.ts-chip').forEach(c=>c.classList.remove('on'));
+  const map={'all':'tf-all','0-1':'tf-0','1-2':'tf-1','2-3':'tf-2','3-5':'tf-3','5+':'tf-4'};
+  if(map[v]) document.getElementById(map[v]).classList.add('on');
+  renderList();
+}
+
+// ── TICKET LIST ───────────────────────────
+function renderList(){
+  if(techPanelMode){renderTechPanel();return;}
+  const sf=document.getElementById('fStatus').value;
+  const rf=document.getElementById('fRegion').value;
+  const isf=document.getElementById('fIssue').value;
+
+  let f=TICKETS.filter(t=>{
+    if(sf&&t.status!==sf) return false;
+    if(rf&&t.region!==rf) return false;
+    if(isf&&t.issue!==isf) return false;
+    // Timer filter — only applies to open/assigned
+    if(timerFilter!=='all'&&t.status==='CLOSED') return false;
+    if(timerFilter!=='all'){
+      const m=minsOpen(t);
+      if(timerFilter==='0-1'&&m>=60)  return false;
+      if(timerFilter==='1-2'&&(m<60||m>=120)) return false;
+      if(timerFilter==='2-3'&&(m<120||m>=180)) return false;
+      if(timerFilter==='3-5'&&(m<180||m>=300)) return false;
+      if(timerFilter==='5+'&&m<300)   return false;
+    }
+    return true;
+  });
+
+  // Sort: PORTER_PENDING first, then OPEN, ASSIGNED, CLOSED
+  f.sort((a,b)=>{
+    const ord={PORTER_PENDING:0,OPEN:1,ASSIGNED:2,CLOSED:3};
+    const ao=ord[a.status]??2, bo=ord[b.status]??2;
+    if(ao!==bo) return ao-bo;
+    return minsOpen(b)-minsOpen(a);
+  });
+
+  document.getElementById('tkCntLbl').textContent=f.length+' tickets';
+  document.getElementById('rph-title').textContent='Active Tickets';
+
+  document.getElementById('tktList').innerHTML=f.map(t=>{
+    const mins=minsOpen(t);
+    const tc=timerClass(mins);
+    const isSel=selectedId===t.id;
+    const isPorter=t.status==='PORTER_PENDING';
+    const isWorking=t.tech_arrived_at&&t.status==='ASSIGNED'; // tech physically on site
+    const borderStyle=isPorter?'border-left:3px solid #ff5252;background:rgba(255,82,82,.03)':
+                      isWorking?'border-left:3px solid #00e676;background:rgba(0,230,118,.02)':'';
+    return `<div class="tcard${isSel?' sel':''}" onclick="selectTicket('${t.id}')"
+      style="${borderStyle}">
+      <div class="tc-top">
+        <span class="tid">${t.id}</span>
+        <span class="badge b${(t.status||'').toLowerCase()}"
+          style="${isPorter?'background:rgba(255,82,82,.15);color:#ff5252;border-color:rgba(255,82,82,.3)':''}">
+          ${isPorter?'🚚 PORTER':t.status}
+        </span>
+        ${isWorking?`<span style="background:rgba(0,230,118,.12);color:#00e676;border:1px solid rgba(0,230,118,.3);border-radius:6px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:4px">🔧 ON SITE</span>`:''}
+        <span class="timer-badge ${tc}" style="margin-left:auto">⏱ ${fmtAge(mins)}</span>
+      </div>
+      <div class="tc-rider">${t.rider||t.rider_name||'—'}</div>
+      <div class="tc-issue">${t.issue||'—'} · <span style="color:var(--text3)">${(t.note||'').slice(0,32)}</span></div>
+      <div class="tc-meta">
+        <span class="tc-tag">${t.region||'—'}</span>
+        <span>${t.mobile||'—'}</span>
+        ${t.distance_km?`<span>📍${t.distance_km}km</span>`:''}
+        ${t.eta_min?`<span>~${t.eta_min}m ETA</span>`:''}
+      </div>
+      ${t.technician?`<div class="tc-tech">🔧 ${t.technician}${isWorking?` <span style="color:#00e676;font-size:9px">● Working now</span>`:''}</div>`:''}
+      ${isPorter?`<div style="font-size:10px;color:var(--red);margin-top:5px;font-weight:700">
+        ⚠ Porter Required — Click to arrange & close
+      </div>`:''}
+    </div>`;
+  }).join('')||'<div style="padding:24px;text-align:center;color:var(--text3);font-size:11px">No tickets match</div>';
+}
+
+// ── SELECT TICKET ─────────────────────────
+function selectTicket(id){
+  selectedId=id;
+  renderList();
+  const t=TICKETS.find(x=>x.id===id);
+  if(!t){document.getElementById('drawer').style.display='none';return;}
+
+  // Focus map
+  const lat=t.latitude||t.lat, lng=t.longitude||t.lng;
+  if(lat&&crMap) crMap.setView([lat,lng],14);
+
+  // Build nearest techs
+  const sorted=[...TECHS].map(tech=>{
+    const tLat=tech.lat||tech.latitude, tLng=tech.lng||tech.longitude;
+    const d=(lat&&tLat)?hdist(lat,lng,tLat,tLng):999;
+    return{...tech,dist:d,eta:Math.round(d/0.5)};
+  }).sort((a,b)=>a.dist-b.dist);
+
+  const mins=minsOpen(t);
+  const tc=timerClass(mins);
+
+  const drawer=document.getElementById('drawer');
+  drawer.style.display='block';
+  drawer.innerHTML=`
+    <div class="dr-hd">
+      <span class="dr-id">${t.id}</span>
+      <span class="badge b${t.status.toLowerCase()}" style="margin-left:6px">${t.status}</span>
+      <span class="timer-badge ${tc}" style="margin-left:8px">⏱ Open ${fmtAge(mins)}</span>
+      <button onclick="document.getElementById('drawer').style.display='none';selectedId=null;renderList()" style="margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">×</button>
+    </div>
+    <div>
+      <div class="dr-row"><span class="dr-k">Rider</span><span class="dr-v">${t.rider||t.rider_name||'—'}</span></div>
+      <div class="dr-row"><span class="dr-k">Mobile</span><span class="dr-v" style="font-family:'IBM Plex Mono',monospace">${t.mobile||'—'}</span></div>
+      <div class="dr-row"><span class="dr-k">Issue</span><span class="dr-v">${t.issue||'—'}</span></div>
+      <div class="dr-row"><span class="dr-k">Note</span><span class="dr-v" style="color:var(--text2)">${t.note||'—'}</span></div>
+      <div class="dr-row"><span class="dr-k">Region</span><span class="dr-v">${t.region||'—'}</span></div>
+      <div class="dr-row"><span class="dr-k">Raised</span><span class="dr-v">${fmtTs(t.ticket_time||t.ticket_datetime)}</span></div>
+      ${t.assigned_at?`<div class="dr-row"><span class="dr-k">Assigned</span><span class="dr-v">${fmtTs(t.assigned_at)}</span></div>`:''}
+      ${t.tech_arrived_at?`<div class="dr-row"><span class="dr-k">Arrived</span><span class="dr-v" style="color:var(--green)">${fmtTs(t.tech_arrived_at)}</span></div>`:''}
+      ${t.closed_at?`<div class="dr-row"><span class="dr-k">Closed</span><span class="dr-v" style="color:var(--green)">${fmtTs(t.closed_at)}</span></div>`:''}
+      ${t.resolution_time_min?`<div class="dr-row"><span class="dr-k">Resolved in</span><span class="dr-v" style="color:var(--green);font-family:'IBM Plex Mono',monospace">${t.resolution_time_min} min</span></div>`:''}
+      ${lat?`<div class="dr-row"><span class="dr-k">Location</span><span class="dr-v"><a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" style="color:var(--blue)">📍 Open Map ↗</a></span></div>`:''}
+      ${t.technician?`<div class="dr-row"><span class="dr-k">Technician</span><span class="dr-v" style="color:var(--orange)">${t.technician}</span></div>`:''}
+      ${t.distance_km?`<div class="dr-row"><span class="dr-k">Distance</span><span class="dr-v">${t.distance_km} km · ~${t.eta_min||'?'} min ETA</span></div>`:''}
+    </div>
+    ${t.status!=='CLOSED'?`
+    <div class="assign-wrap">
+      <select class="asel" id="techSel">
+        <option value="">— Select Technician —</option>
+        ${sorted.map(tech=>`<option value="${tech.id}|${tech.name}" ${t.tech_id===tech.id?'selected':''}>
+          ${tech.name} · ${tech.region} · ${tech.dist<99?tech.dist+'km · ~'+tech.eta+'min':tech.status} · ${tech.active_tickets||0}/${tech.capacity||4} active
+        </option>`).join('')}
+      </select>
+      <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Nearest Available</div>
+      <div class="nearest-row">
+        ${sorted.filter(tech=>tech.status==='available').slice(0,4).map((tech,i)=>`
+          <div class="nc-chip${i===0?' best':''}" onclick="document.getElementById('techSel').value='${tech.id}|${tech.name}'">
+            ${i===0?'⭐ ':''}${tech.name.split(' ')[0]} · ${tech.dist<99?tech.dist+'km':'?'} · ${tech.active_tickets||0}/${tech.capacity||4}
+          </div>`).join('')}
+      </div>
+      <div class="abtn-row">
+        <button class="abtn abtn-assign" onclick="verifyBeforeAssign('${t.id}','${t.rider||''}','${t.issue||''}')">⚡ Assign</button>
+        ${t.status==='ASSIGNED'?`<button class="abtn abtn-reassign" onclick="openReassignModal('${t.id}')">↺ Reassign</button>`:''}
+        ${t.status==='ASSIGNED'?`<button class="abtn abtn-close" onclick="doClose('${t.id}')">✓ Close</button>`:''}
+        ${t.status==='PORTER_PENDING'?`<button class="abtn" onclick="openPorterClose('${t.id}')"
+          style="background:rgba(255,82,82,.15);border:1px solid rgba(255,82,82,.3);color:var(--red)">🚚 Porter Received</button>`:''}
+      </div>
+    </div>`:`<div style="font-size:11px;color:var(--green);margin-top:10px;padding:8px;background:rgba(0,230,118,.06);border-radius:6px;border:1px solid rgba(0,230,118,.15)">✓ Resolved in ${t.resolution_time_min||'?'} min</div>`}
+  `;
+}
+
+// ── ACTIONS ───────────────────────────────
+function verifyBeforeAssign(ticketId, riderName, issue){
+  const sel = document.getElementById('techSel');
+  if(!sel||!sel.value){ toast('Select a technician','','err'); return; }
+  const parts = sel.value.split('|');
+  const techId = parts[0], techName = parts[1];
+  const existing = document.getElementById('crVerifyOverlay');
+  if(existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'crVerifyOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:380px;width:100%;font-family:'Sora',sans-serif">
+      <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:4px">Verify Before Assigning</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px">${ticketId} · <b style="color:#fff">${riderName}</b></div>
+      <div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:16px">Assigning to: <span style="color:#ffab40;font-weight:700">${techName}</span></div>
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.7);margin-bottom:8px">Have you called the rider to verify?</div>
+      <textarea id="crVerifyNote" placeholder="Remarks (optional) — e.g. Rider confirmed location..." rows="2"
+        style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:8px;padding:8px;font-size:12px;resize:none;font-family:inherit;margin-bottom:12px;box-sizing:border-box"></textarea>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button id="crVerifyYes" style="flex:1;background:rgba(0,230,118,.15);border:1.5px solid rgba(0,230,118,.4);color:#00e676;border-radius:8px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✓ Yes, Called — Assign</button>
+        <button id="crVerifySkip" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.6);border-radius:8px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Skip — Assign Directly</button>
+      </div>
+      <button id="crVerifyCancel" style="width:100%;background:none;border:none;color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;font-family:inherit;padding:6px">Cancel</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('crVerifyYes').onclick = () => {
+    const note = document.getElementById('crVerifyNote').value.trim();
+    overlay.remove();
+    doAssign(ticketId, techId, techName, note||'Called & verified');
+  };
+  document.getElementById('crVerifySkip').onclick = () => { overlay.remove(); doAssign(ticketId, techId, techName, ''); };
+  document.getElementById('crVerifyCancel').onclick = () => overlay.remove();
+}
+
+async function doAssign(ticketId, techId, techName, callerNote){
+  if(!techId){
+    const sel=document.getElementById('techSel');
+    if(!sel||!sel.value){toast('Select a technician','','err');return;}
+    const p=sel.value.split('|'); techId=p[0]; techName=p[1];
+  }
+  const res=await api('/assign_ticket',{method:'POST',body:JSON.stringify({ticket_id:ticketId,technician_name:techName,tech_id:+techId})});
+  if(res){
+    await loadAll();
+    selectTicket(ticketId);
+    toast('Assigned',`${ticketId} → ${techName}`,'assigned');
+  } else toast('Failed to assign','Check server','err');
+}
+
+
+let _crCloseId = null;
+
+function doClose(ticketId){
+  _crCloseId = ticketId;
+  // Create inline prompt inside drawer
+  const drawer = document.getElementById('drawer');
+  const existing = document.getElementById('cr-close-form');
+  if(existing) existing.remove();
+
+  const form = document.createElement('div');
+  form.id = 'cr-close-form';
+  form.style.cssText = 'padding:14px;border-top:1px solid var(--border);background:var(--bg2);';
+  form.innerHTML = `
+    <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px">Close Ticket · ${ticketId}</div>
+    <select id="cr-res-type" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:12px;margin-bottom:8px;font-family:inherit">
+      <option value="">— Resolution Type *</option>
+      <option>Resolved on site</option>
+      <option>Porter to hub</option>
+      <option>Rider resolved</option>
+      <option>False alarm</option>
+      <option>Duplicate ticket</option>
+      <option>Other</option>
+    </select>
+    <textarea id="cr-res-note" placeholder="Resolution note / remarks *" rows="2"
+      style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:12px;resize:none;font-family:inherit;margin-bottom:8px"></textarea>
+    <div id="cr-close-err" style="display:none;color:var(--red);font-size:11px;margin-bottom:6px"></div>
+    <div style="display:flex;gap:6px">
+      <button onclick="submitCrClose()" style="flex:1;background:var(--green);border:none;color:#000;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✓ Confirm Close</button>
+      <button onclick="document.getElementById('cr-close-form').remove();_crCloseId=null;"
+        style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;font-family:inherit">Cancel</button>
+    </div>`;
+  drawer.appendChild(form);
+  form.scrollIntoView({behavior:'smooth'});
+}
+
+async function submitCrClose(){
+  const note    = (document.getElementById('cr-res-note')?.value||'').trim();
+  const resType = document.getElementById('cr-res-type')?.value||'';
+  const errEl   = document.getElementById('cr-close-err');
+  if(!resType){ errEl.textContent='Select resolution type'; errEl.style.display='block'; return; }
+  if(!note||note.length<5){ errEl.textContent='Resolution note required (min 5 chars)'; errEl.style.display='block'; return; }
+
+  const fullNote = resType+'. '+note+' [CR]';
+  const res = await api('/close_ticket',{method:'POST',body:JSON.stringify({
+    ticket_id:_crCloseId, resolution_note:fullNote, resolution_type:resType
+  })});
+  if(res||res===null){
+    document.getElementById('cr-close-form')?.remove();
+    document.getElementById('drawer').style.display='none';
+    selectedId=null; _crCloseId=null;
+    await loadAll();
+    toast('Closed',`Ticket resolved ✓`,'closed');
+  } else {
+    if(errEl){ errEl.textContent='Failed: '+(api._lastError||'server error'); errEl.style.display='block'; }
+  }
+}
+
+function openPorterClose(ticketId){
+  // Show porter close modal inside drawer
+  const t=TICKETS.find(x=>x.id===ticketId);
+  const drawer=document.getElementById('drawer');
+  const existing=document.getElementById('porter-close-form');
+  if(existing){ existing.remove(); return; }
+  const div=document.createElement('div');
+  div.id='porter-close-form';
+  div.style.cssText='margin-top:12px;padding:12px;background:rgba(255,82,82,.06);border:1px solid rgba(255,82,82,.2);border-radius:10px';
+  div.innerHTML=`
+    <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:10px">🚚 Porter Received at Hub</div>
+    <label style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Total Amount Paid to Porter (₹)</label>
+    <input id="porter-final-amt" type="number" min="0" placeholder="₹ amount"
+      style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;color:var(--text);font-family:'Sora',sans-serif;outline:none;margin-bottom:8px">
+    <label style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Closing Note</label>
+    <input id="porter-final-note" placeholder="Vehicle received, work done, etc."
+      style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;color:var(--text);font-family:'Sora',sans-serif;outline:none;margin-bottom:10px">
+    <button onclick="doPorterClose('${ticketId}')"
+      style="width:100%;padding:10px;background:var(--red);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">
+      ✓ Mark Porter Received & Close Ticket
+    </button>`;
+  drawer.appendChild(div);
+}
+
+async function doPorterClose(ticketId){
+  const amt  = document.getElementById('porter-final-amt').value;
+  const note = document.getElementById('porter-final-note').value;
+  if(!amt){ toast('Enter porter amount','','err'); return; }
+  const fullNote = `Porter received at hub. Amount paid: ₹${amt}. ${note}`;
+
+  // Update porter_amount and porter_received_at + close ticket
+  const res = await api('/close_ticket',{method:'POST',body:JSON.stringify({
+    ticket_id:ticketId,
+    resolution_note:fullNote,
+    porter_amount: +amt
+  })});
+  // Also update porter fields directly
+  await api('/update_porter_received',{method:'POST',body:JSON.stringify({
+    ticket_id:ticketId,
+    porter_amount:+amt,
+    porter_received_at: new Date().toISOString()
+  })}).catch(()=>{});
+
+  if(res){
+    document.getElementById('drawer').style.display='none';
+    selectedId=null;
+    await loadAll();
+    toast('Porter Closed',`${ticketId} — ₹${amt} paid`,'closed');
+  } else {
+    toast('Failed','Check server','err');
+  }
+}
+
+
+function openReassignModal(ticketId){
+  reassignTicketId=ticketId;
+  const t=TICKETS.find(x=>x.id===ticketId);
+  document.getElementById('reas-info').textContent=`${ticketId} · Currently: ${t?.technician||'Unassigned'}`;
+  document.getElementById('reas-reason').value='';
+  const sorted=[...TECHS].map(tech=>{
+    const lat=t?.latitude||t?.lat, lng=t?.longitude||t?.lng;
+    const tLat=tech.lat||tech.latitude, tLng=tech.lng||tech.longitude;
+    const d=(lat&&tLat)?hdist(lat,lng,tLat,tLng):999;
+    return{...tech,dist:d};
+  }).sort((a,b)=>a.dist-b.dist);
+  document.getElementById('reas-tech').innerHTML=`<option value="">Select new technician…</option>`+
+    sorted.filter(tech=>tech.id!==t?.tech_id).map(tech=>
+      `<option value="${tech.id}|${tech.name}">${tech.name} · ${tech.region} · ${tech.dist<99?tech.dist+'km ':''} ${tech.status}</option>`
+    ).join('');
+  openModal();
+}
+
+async function doReassign(){
+  const sel=document.getElementById('reas-tech').value;
+  const reason=document.getElementById('reas-reason').value;
+  if(!sel){toast('Select technician','','err');return;}
+  const[techId,techName]=sel.split('|');
+  const res=await api('/reassign_ticket',{method:'POST',body:JSON.stringify({ticket_id:reassignTicketId,new_tech_id:+techId,new_tech_name:techName,reason})});
+  closeModal();
+  if(res){await loadAll();selectTicket(reassignTicketId);toast('Reassigned',`→ ${techName}`,'assigned');}
+  else toast('Failed','Check server','err');
+}
+
+// ── TECH PANEL ────────────────────────────
+function showTechPanel(){
+  techPanelMode=true;
+  document.getElementById('rph-title').textContent='Technician Status';
+  document.getElementById('timerFilterRow').style.display='none';
+  document.getElementById('drawer').style.display='none';
+  renderTechPanel();
+}
+
+function renderTechPanel(){
+  const todayStr = new Date().toDateString();
+
+  const html=TECHS.map(t=>{
+    const tid=t.id||t.tech_id;
+    const cap=t.capacity||t.max_active_tickets||4;
+    const load=Math.round((t.active_tickets||0)/Math.max(cap,1)*100);
+    const lc=load>=90?'var(--red)':load>=60?'var(--orange)':'var(--green)';
+    const ini=(t.name||'').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const s=t.status||'';
+
+    // ── TODAY'S STATS from TICKETS array ──────────────────────
+    const myTickets  = TICKETS.filter(tk=>tk.tech_id===tid||tk.technician===t.name);
+    const todayDone  = myTickets.filter(tk=>tk.status==='CLOSED'&&new Date(tk.closed_at||0).toDateString()===todayStr).length;
+    const todayTimes = myTickets.filter(tk=>tk.status==='CLOSED'&&new Date(tk.closed_at||0).toDateString()===todayStr&&tk.resolution_time_min>0).map(tk=>tk.resolution_time_min);
+    const avgMin     = todayTimes.length?Math.round(todayTimes.reduce((a,b)=>a+b,0)/todayTimes.length):null;
+
+    // ── CURRENTLY WORKING — ticket where tech has arrived (on site) ──
+    const activeTickets = myTickets.filter(tk=>tk.status==='ASSIGNED');
+    const workingNow    = activeTickets.find(tk=>tk.tech_arrived_at);
+    const waitingTickets= activeTickets.filter(tk=>!tk.tech_arrived_at);
+
+    const btnStyle=(active,bg,col,bdr)=>
+      `padding:8px 4px;border-radius:8px;width:100%;border:2px solid ${bdr};background:${active?bg:'rgba(0,0,0,.0)'};color:${active?col:bdr};font-size:10px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;transition:.15s`;
+    const avActive=s==='available', buActive=s==='busy', lvActive=s==='on_leave', ofActive=s==='offline';
+    const avIcon = avActive?'rgba(0,230,118,.2)':buActive?'rgba(255,152,0,.15)':lvActive?'rgba(255,68,68,.15)':'var(--bg3)';
+    const avTxt  = avActive?'var(--green)':buActive?'var(--orange)':lvActive?'var(--red)':'var(--text3)';
+
+    return `<div style="padding:12px 14px;border-bottom:1px solid var(--border)">
+      <!-- Header row -->
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+        <div style="width:36px;height:36px;border-radius:50%;background:${avIcon};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:${avTxt};flex-shrink:0;border:2px solid rgba(255,255,255,.06)">${ini}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700">${t.name}</div>
+          <div style="font-size:10px;color:var(--text2)">${t.region} · ${t.mobile||'—'}</div>
+        </div>
+        <span class="badge ${t.is_online?'bassigned':'bclosed'}">${t.is_online?'🟢 On':'⚫ Off'}</span>
+      </div>
+
+      <!-- TODAY'S STATS row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:9px">
+        <div style="background:var(--bg3);border-radius:8px;padding:7px 4px;text-align:center">
+          <div style="font-size:15px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--orange)">${t.active_tickets||0}</div>
+          <div style="font-size:9px;color:var(--text3);margin-top:1px">Active</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:8px;padding:7px 4px;text-align:center">
+          <div style="font-size:15px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--green)">${todayDone}</div>
+          <div style="font-size:9px;color:var(--text3);margin-top:1px">Today ✓</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:8px;padding:7px 4px;text-align:center">
+          <div style="font-size:15px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:${lc}">${load}%</div>
+          <div style="font-size:9px;color:var(--text3);margin-top:1px">Load</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:8px;padding:7px 4px;text-align:center">
+          <div style="font-size:13px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--blue)">${avgMin?avgMin+'m':'—'}</div>
+          <div style="font-size:9px;color:var(--text3);margin-top:1px">Avg Min</div>
+        </div>
+      </div>
+
+      <!-- STATUS BUTTONS -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px">
+        <button onclick="setTechStatus(${tid},'available')" style="${btnStyle(avActive,'var(--green)','#000','rgba(0,230,118,.5)')}">✓ Avail</button>
+        <button onclick="setTechStatus(${tid},'busy')"      style="${btnStyle(buActive,'var(--orange)','#000','rgba(255,152,0,.5)')}">⚙ Busy</button>
+        <button onclick="setTechStatus(${tid},'on_leave')"  style="${btnStyle(lvActive,'var(--red)','#fff','rgba(255,68,68,.5)')}">🚫 Leave</button>
+        <button onclick="setTechStatus(${tid},'offline')"   style="${btnStyle(ofActive,'#3d5a7a','#fff','rgba(61,90,122,.5)')}">○ Off</button>
+      </div>
+
+      <!-- CURRENTLY WORKING TICKET -->
+      ${workingNow ? `
+      <div style="margin-top:8px;background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.2);border-radius:8px;padding:8px 10px">
+        <div style="font-size:9px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">🔧 Currently Working On Site</div>
+        <div style="font-size:11px;font-weight:700;color:var(--text)">${workingNow.rider||'—'} · ${workingNow.issue||'—'}</div>
+        <div style="font-size:10px;color:var(--text2)">${workingNow.id} · ${workingNow.region||'—'}</div>
+        <div style="font-size:10px;color:var(--green);margin-top:2px">Arrived: ${workingNow.tech_arrived_at?new Date(workingNow.tech_arrived_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false}):'—'}</div>
+      </div>` : ''}
+
+      <!-- WAITING TICKETS (assigned but not arrived yet) -->
+      ${waitingTickets.length ? `
+      <div style="margin-top:6px">
+        <div style="font-size:9px;color:var(--text3);font-weight:700;margin-bottom:3px">⏳ QUEUED (${waitingTickets.length})</div>
+        ${waitingTickets.map((tk,qi)=>`
+        <div style="background:var(--bg3);border-radius:6px;padding:5px 8px;margin-bottom:3px;font-size:10px;border-left:2px solid ${qi===0?'rgba(255,171,64,.5)':'var(--border)'}">
+          ${qi===0?`<span style="color:#ffab40;font-weight:800;font-size:9px">📌 NEXT → </span>`:''}
+          <span style="color:var(--sky)">${tk.id}</span>
+          <span style="color:var(--text2);margin-left:5px">${tk.rider||'—'}</span>
+          <span style="color:var(--text3);margin-left:5px">${tk.issue||'—'}</span>
+          ${tk.distance_km?`<span style="color:var(--text3);margin-left:5px">📍${tk.distance_km}km</span>`:''}
+        </div>`).join('')}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('tktList').innerHTML = html +
+    `<div style="padding:10px 13px;border-top:1px solid var(--border)">
+      <button class="abtn abtn-assign" onclick="techPanelMode=false;document.getElementById('timerFilterRow').style.display='';renderList()">← Back to Tickets</button>
+    </div>`;
+}
+
+async function setTechStatus(techId,status){
+  const res=await api('/update_technician_status',{method:'POST',body:JSON.stringify({tech_id:techId,status})});
+  if(res){await loadAll();renderTechPanel();toast('Status updated',status,'info');}
+  else toast('Failed','','err');
+}
+
+// ── MAP ───────────────────────────────────
+function initMap(){
+  // Give the DOM a frame to render before init (fixes blank map on load)
+  setTimeout(()=>{
+    crMap=L.map('crMap',{zoomControl:false}).setView([28.56,77.20],11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom:18,
+      attribution:'© OpenStreetMap'
+    }).addTo(crMap);
+    L.control.zoom({position:'bottomright'}).addTo(crMap);
+    // Force resize after render so tiles load correctly
+    setTimeout(()=>{ crMap.invalidateSize(); refreshMap(); },300);
+  },100);
+}
+
+function mkPin(color,label,sublabel){
+  return L.divIcon({className:'',iconSize:[60,52],iconAnchor:[30,48],
+    html:`<div class="custom-pin"><div class="pin-c" style="background:${color}">${label}</div><div class="pin-tail"></div><div class="pin-lbl">${sublabel}</div></div>`});
+}
+
+function renderMapMarkers(){
+  if(!crMap) return;
+  Object.values(mapMarkers).forEach(m=>crMap.removeLayer(m));
+  mapMarkers={};
+  TICKETS.filter(t=>t.status!=='CLOSED').forEach(t=>{
+    if(t.status==='OPEN'&&!mapLayers.open) return;
+    if(t.status==='ASSIGNED'&&!mapLayers.assigned) return;
+    const lat=t.latitude||t.lat, lng=t.longitude||t.lng;
+    if(!lat) return;
+    const mins=minsOpen(t);
+    const color=t.status==='OPEN'?'#ff4444':'#ff9800';
+    const lbl=t.status==='OPEN'?'!':'→';
+    const sub=t.id.slice(-3);
+    const m=L.marker([lat,lng],{icon:mkPin(color,lbl,sub)}).addTo(crMap);
+    m.bindPopup(`<div style="font-family:Sora,sans-serif;font-size:12px;min-width:180px"><b style="color:#ff9800">${t.id}</b><br><b>${t.rider||'Rider'}</b><br>${t.issue}<br><span style="color:#888">${t.note||''}</span><br><b>Open: ${fmtAge(mins)}</b>${t.technician?'<br>Tech: '+t.technician:''}</div>`);
+    m.on('click',()=>selectTicket(t.id));
+    mapMarkers[t.id]=m;
+  });
+  if(mapLayers.tech) TECHS.forEach(t=>{
+    const lat=t.lat||t.latitude, lng=t.lng||t.longitude;
+    if(!lat) return;
+    const c=t.status==='available'?'#00e676':t.status==='on_leave'?'#ff4444':'#ff9800';
+    const ini=(t.name||'').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const m=L.marker([lat,lng],{icon:mkPin(c,ini,t.name.split(' ')[0])}).addTo(crMap);
+    m.bindPopup(`<div style="font-family:Sora,sans-serif;font-size:12px"><b>${t.name}</b><br>${t.region}<br>${t.mobile||''}<br>Active: ${t.active_tickets||0}/${t.capacity||4}<br><span style="color:${c}">${t.status}</span>${t.is_online?'<br>🟢 Online':''}</div>`);
+    // Draw lines to assigned tickets
+    TICKETS.filter(tk=>tk.status==='ASSIGNED'&&(tk.tech_id===t.id||tk.tech_id===t.tech_id)&&(tk.latitude||tk.lat)).forEach(tk=>{
+      const tLat=tk.latitude||tk.lat, tLng=tk.longitude||tk.lng;
+      L.polyline([[lat,lng],[tLat,tLng]],{color:'rgba(255,152,0,.35)',weight:2,dashArray:'4 4'}).addTo(crMap);
+    });
+    mapMarkers['tech-'+(t.id||t.tech_id)]=m;
+  });
+}
+
+function toggleML(layer){
+  mapLayers[layer]=!mapLayers[layer];
+  const btn=document.getElementById('ml-'+layer);
+  if(btn) btn.classList.toggle('on',mapLayers[layer]);
+  renderMapMarkers();
+}
+
+// ── FILTER HELPERS ────────────────────────
+function setStatusFilter(s){
+  techPanelMode=false;
+  document.getElementById('timerFilterRow').style.display='';
+  document.getElementById('fStatus').value=s;
+  renderList();
+}
+function clearFilters(){
+  techPanelMode=false;
+  document.getElementById('timerFilterRow').style.display='';
+  document.getElementById('fStatus').value='';
+  document.getElementById('fRegion').value='';
+  document.getElementById('fIssue').value='';
+  timerFilter='all';
+  document.querySelectorAll('.ts-chip').forEach(c=>c.classList.remove('on'));
+  document.getElementById('tf-all').classList.add('on');
+  renderList();
+}
+
+// ── INIT ──────────────────────────────────
+// Init map first so it has time to render before data arrives
+initMap();
+// Load data after short delay so map container has height
+setTimeout(()=>loadAll(), 200);
+setInterval(loadAll, 5000);
+document.getElementById('tf-all').classList.add('on');
+</script>
+</body>
+</html>
